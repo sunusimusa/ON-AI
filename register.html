@@ -1,48 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Tele Tech AI - Register</title>
-  <link rel="stylesheet" href="style.css" />
+<meta charset="UTF-8">
+<title>Register - Tele Tech AI</title>
+<link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-900">
-
-<div class="w-full min-h-screen flex items-center justify-center text-white p-6">
-  <div class="bg-gray-800 p-8 rounded-2xl shadow-xl w-full max-w-sm">
-    <h2 class="text-2xl font-bold text-center mb-6">Register</h2>
-
-    <form id="registerForm" class="space-y-4">
-      <input class="input" type="text" id="username" placeholder="Username" required />
-      <input class="input" type="password" id="password" placeholder="Password" required />
-      <button class="btn" type="submit">Register</button>
-    </form>
-    <p class="text-center mt-4">
-      Already have an account? <a href="/index.html" class="text-blue-400">Login</a>
-    </p>
-  </div>
+<body class="bg">
+<div class="card">
+<h2>Create Account</h2>
+<form id="regForm">
+<input type="text" id="username" placeholder="Username" required>
+<input type="password" id="password" placeholder="Password" equired>
+<button type="submit">Register</button>
+</form>
+<p>Have account? <a href="index.html">Login</a></p>
 </div>
-
 <script>
-document.getElementById('registerForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const username = document.getElementById('username').value;
-  const password = document.getElementById('password').value;
-
-  const res = await fetch('/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
-  });
-
-  const data = await res.json();
-  if (data.success) {
-    localStorage.setItem('token', data.token);
-    window.location.href = '/image.html';
-  } else {
-    alert(data.message || 'Registration failed');
-  }
+document.getElementById('regForm').addEventListener('submit', async (e)=>{
+ e.preventDefault();
+ let username=document.getElementById('username').value;
+ let password=document.getElementById('password').value;
+ let res=await fetch('/register',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({username,password})
+ });
+ let data=await res.json();
+ if(data.success){
+   localStorage.setItem('token',data.token);
+   window.location='image.html';
+ }else alert(data.message);
 });
 </script>
-
 </body>
-        </html>
+</html>
