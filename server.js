@@ -1,72 +1,94 @@
-
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const jwt = require('jsonwebtoken');
-const cors = require('cors');
+// server.js
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+require("dotenv").config();
 
 const app = express();
-app.use(cors());
+
+// Middleware
 app.use(express.json());
-app.use(express.static('frontend'));
+app.use(express.static(path.join(__dirname, "public"))); // Serve all HTML + CSS
 
-const USERS = path.join(__dirname, 'data', 'users.json');
-const SECRET = 'tele-tech-secret';
+// Load users DB
+const usersFile = path.join(__dirname, "data", "users.json");
 
-// Load users
-function loadUsers() {
-  return JSON.parse(fs.readFileSync(USERS));
-}
-// Save users
-function saveUsers(u) {
-  fs.writeFileSync(USERS, JSON.stringify(u, null, 2));
+// Ensure users.json exists
+if (!fs.existsSync(usersFile)) {
+    fs.writeFileSync(usersFile, JSON.stringify([]));
 }
 
-// REGISTER
-app.post('/register', (req, res) => {
-  const { username, password } = req.body;
+// Register Endpoint
+app.post("/api/register", (req, res) => {
+    const { email, password } = req.body;
 
-  if (!username || !password)
-    return res.status(400).json({ error: 'Missing username or password' });
+    if (!email || !password) {
+        return res.status(400).json({ message: "Missing email or password" });
+    }
 
-  const users = loadUsers();
-  if (users.find(u => u.username === username)) {
-    return res.status(400).json({ error: 'User already exists' });
-  }
+    const users = JSON.parse(fs.readFileSync(usersFile));
 
-  users.push({ username, password });
-  saveUsers(users);
-  res.json({ success: true });
+    const existing = users.find((u) => u.email === email);
+    if (existing) {
+        return res.status(400).json({ message: "Email already registered" });
+    }
+
+    const hashed = bcrypt.hashSync(password, 10);
+
+    users.push({ email, password: hashed });
+    fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
+
+    return res.json({ message: "User registered successfully" });
 });
 
-// LOGIN
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const users = loadUsers();
+// Login Endpoint
+app.post("/api/login", (req, res) => {
+    const { email, password } = req.body;
 
-  const u = users.find(u => u.username === username && u.password === password);
-  if (!u) return res.status(400).json({ error: 'Invalid credentials' });
+    const users = JSON.parse(fs.readFileSync(usersFile));
+    const user = users.find((u) => u.email === email);
 
-  const token = jwt.sign({ username }, SECRET, { expiresIn: '2h' });
-  res.json({ token });
+    if (!user) {
+        return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const match = bcrypt.compareSync(password, user.password);
+    if (!match) {
+        return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign({ email }, process.env.JWT_SECRET, {
+        expiresIn: "24h",
+    });
+
+    return res.json({ token });
 });
 
-// GENERATE IMAGE
-app.post('/generate', (req, res) => {
-  const { token, prompt } = req.body;
+// Protect Route Example
+function auth(req, res, next) {
+    const header = req.headers.authorization;
+    if (!header) return res.status(401).json({ message: "Missing token" });
 
-  try {
-    jwt.verify(token, SECRET);
-    // placeholder
-    res.json({ image: "https://example.com/generated.png" });
-  } catch (e) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
+    const token = header.split(" ")[1];
+
+    try {
+        jwt.verify(token, process.env.JWT_SECRET);
+        next();
+    } catch (err) {
+        return res.status(401).json({ message: "Invalid token" });
+    }
+}
+
+// Example protected generator route
+app.post("/api/generate", auth, async (req, res) => {
+    return res.json({ result: "AI generated content here" });
 });
 
-// RUN SERVER
-app.listen(3000, () => const PORT = process.env.PORT || 10000;
+// IMPORTANT for Render
+const PORT = process.env.PORT || 10000;
 
-server.listen(PORT, () => {
+app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
