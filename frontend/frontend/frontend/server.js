@@ -1,47 +1,68 @@
-import express from 'express';
-import fs from 'fs';
-import jwt from 'jsonwebtoken';
-import cors from 'cors';
-import bodyParser from 'body-parser';
+
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
+const jwt = require('jsonwebtoken');
+const cors = require('cors');
 
 const app = express();
 app.use(cors());
-app.use(bodyParser.json());
-app.use(express.static('./'));
+app.use(express.json());
+app.use(express.static('frontend'));
 
-const USERS_FILE = './data/users.json';
-const JWT_SECRET = process.env.JWT_SECRET || 'DEV_SECRET_123';
+const USERS = path.join(__dirname, 'data', 'users.json');
+const SECRET = 'tele-tech-secret';
 
-function loadUsers(){
- return JSON.parse(fs.readFileSync(USERS_FILE));
+// Load users
+function loadUsers() {
+  return JSON.parse(fs.readFileSync(USERS));
 }
-function saveUsers(u){
- fs.writeFileSync(USERS_FILE, JSON.stringify(u,null,2));
+// Save users
+function saveUsers(u) {
+  fs.writeFileSync(USERS, JSON.stringify(u, null, 2));
 }
 
-app.post('/register',(req,res)=>{
- let {username,password}=req.body;
- let users=loadUsers();
- if(users[username]) return res.json({success:false,message:'User exists'});
- users[username]={password};
- saveUsers(users);
- let token=jwt.sign({username},JWT_SECRET,{expiresIn:'7d'});
- res.json({success:true,token});
+// REGISTER
+app.post('/register', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password)
+    return res.status(400).json({ error: 'Missing username or password' });
+
+  const users = loadUsers();
+  if (users.find(u => u.username === username)) {
+    return res.status(400).json({ error: 'User already exists' });
+  }
+
+  users.push({ username, password });
+  saveUsers(users);
+  res.json({ success: true });
 });
 
-app.post('/login',(req,res)=>{
- let {username,password}=req.body;
- let users=loadUsers();
- if(!users[username] || users[username].password!==password)
-   return res.json({success:false,message:'Invalid login'});
- let token=jwt.sign({username},JWT_SECRET,{expiresIn:'7d'});
- res.json({success:true,token});
+// LOGIN
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  const users = loadUsers();
+
+  const u = users.find(u => u.username === username && u.password === password);
+  if (!u) return res.status(400).json({ error: 'Invalid credentials' });
+
+  const token = jwt.sign({ username }, SECRET, { expiresIn: '2h' });
+  res.json({ token });
 });
 
-app.post('/generate-image',(req,res)=>{
- let {prompt}=req.body;
- res.json({image:`https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(prompt)}`});
+// GENERATE IMAGE
+app.post('/generate', (req, res) => {
+  const { token, prompt } = req.body;
+
+  try {
+    jwt.verify(token, SECRET);
+    // placeholder
+    res.json({ image: "https://example.com/generated.png" });
+  } catch (e) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
 });
 
-const PORT=process.env.PORT || 10000;
-app.listen(PORT,()=>console.log('Server running on '+PORT));
+// RUN SERVER
+app.listen(3000, () => console.log("Server running on port 3000"));
