@@ -10,15 +10,15 @@ const OpenAI = require("openai");
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+// ====== MIDDLEWARES (MUHIMMI) ======
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 // ====== OPENAI CLIENT ======
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
-
-// ====== MIDDLEWARES ======
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // ====== STATIC FILES ======
 app.use(express.static(path.join(__dirname, "public")));
@@ -56,7 +56,7 @@ app.post("/generate", async (req, res) => {
 
     const result = await openai.images.generate({
       model: "gpt-image-1",
-      prompt: prompt,
+      prompt,
       size: "512x512"
     });
 
@@ -66,7 +66,7 @@ app.post("/generate", async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("OPENAI ERROR:", err);
     res.json({
       success: false,
       message: "Image generation failed"
