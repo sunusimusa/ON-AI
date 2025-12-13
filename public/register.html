@@ -1,7 +1,32 @@
-fetch("https://tele-tech-ai.onrender.com/register", {
-    method: "POST",
-    headers: {
+<script>
+async function registerUser() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+
+  if (!username || !password) {
+    alert("Cika duk filaye");
+    return;
+  }
+
+  try {
+    const res = await fetch("https://tele-tech-ai.onrender.com/register", {
+      method: "POST",
+      headers: {
         "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ username, password })
-});
+      },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert("Register ya yi nasara");
+      window.location.href = "login.html";
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    alert("Error connecting to server");
+  }
+}
+</script>
