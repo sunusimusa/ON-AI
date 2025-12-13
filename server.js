@@ -2,18 +2,11 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const OpenAI = require("openai");
+const axios = require("axios"); // don HTTP requests
 
 // ====== APP ======
 const app = express();
 const PORT = process.env.PORT || 10000;
-
-// ====== OPENAI CLIENT ======
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
 
 // ====== MIDDLEWARES ======
 app.use(cors());
@@ -23,58 +16,44 @@ app.use(express.urlencoded({ extended: true }));
 // ====== STATIC FILES ======
 app.use(express.static(path.join(__dirname, "public")));
 
-// ====== GET PAGES ======
-app.get("/register", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "register.html"));
+// ====== ROUTES ======
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
-app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
+app.get("/register", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "register.html"));
 });
 
 app.get("/generator", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "generator.html"));
 });
 
-// ====== POST APIs ======
-app.post("/register", async (req, res) => {
-  res.json({ success: true });
-});
-
-app.post("/login", async (req, res) => {
-  res.json({ success: true });
-});
-
-// ✅ AI IMAGE GENERATION (MUHIMMI)
+// ====== FREE IMAGE GENERATOR (No OpenAI Needed) ======
 app.post("/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
 
     if (!prompt) {
-      return res.json({ success: false, message: "Prompt is required" });
+      return res.json({ success: false, message: "Please provide a prompt" });
     }
 
-    const result = await openai.images.generate({
-      model: "gpt-image-1",
-      prompt: prompt,
-      size: "512x512"
-    });
+    // Amfani da public image API (source.unsplash.com)
+    const imageUrl = `https://source.unsplash.com/512x512/?${encodeURIComponent(prompt)}`;
 
+    // Aika result
     res.json({
       success: true,
-      image: result.data[0].url
+      image: imageUrl,
     });
 
   } catch (err) {
-    console.error("OPENAI ERROR:", err);
-    res.json({
-      success: false,
-      message: "Image generation failed"
-    });
+    console.error("Error generating image:", err);
+    res.json({ success: false, message: "Image generation failed" });
   }
 });
 
 // ====== START SERVER ======
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log("✅ Free Image API Server running on port " + PORT);
 });
