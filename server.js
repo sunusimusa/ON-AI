@@ -9,7 +9,9 @@ const OpenAI = require("openai");
 // ====== APP ======
 const app = express();
 const PORT = process.env.PORT || 10000;
-
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 // ====== MIDDLEWARES ======
 app.use(cors());
 app.use(express.json());
