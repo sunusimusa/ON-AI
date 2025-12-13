@@ -45,7 +45,7 @@ app.post("/login", async (req, res) => {
   res.json({ success: true });
 });
 
-// ✅ AI IMAGE GENERATION (DAI-DAI)
+// ✅ AI IMAGE GENERATION (MUHIMMI)
 app.post("/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -56,7 +56,7 @@ app.post("/generate", async (req, res) => {
 
     const result = await openai.images.generate({
       model: "gpt-image-1",
-      prompt,
+      prompt: prompt,
       size: "512x512"
     });
 
