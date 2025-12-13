@@ -1,24 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Register</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="font-family: Arial; padding: 40px;">
 
-  <h2>Register</h2>
+<body style="font-family: Arial; background:#f4f6f9;">
 
-  <input id="username" placeholder="Username"><br><br>
-  <input id="password" type="password" placeholder="Password"><br><br>
+  <div style="
+    max-width: 400px;
+    margin: 80px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  ">
 
-  <button onclick="register()">Register</button>
+    <h2 style="text-align:center;">Create Account</h2>
 
-  <p id="msg"></p>
+    <input id="username" placeholder="Username or Email"
+      style="width:100%; padding:10px; margin-bottom:15px;"><br>
+
+    <input id="password" type="password" placeholder="Password"
+      style="width:100%; padding:10px; margin-bottom:15px;"><br>
+
+    <button onclick="registerUser()"
+      style="width:100%; padding:12px; background:#007bff; color:white; border:none; border-radius:6px;">
+      Register
+    </button>
+
+    <p id="msg" style="text-align:center; margin-top:15px;"></p>
+
+  </div>
 
   <script>
-    async function register() {
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
+    async function registerUser() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const msg = document.getElementById("msg");
+
+      msg.style.color = "red";
+
+      if (!username || !password) {
+        msg.innerText = "Please fill all fields";
+        return;
+      }
 
       try {
         const res = await fetch("https://tele-tech-ai.onrender.com/register", {
@@ -28,10 +55,19 @@
         });
 
         const data = await res.json();
-        document.getElementById("msg").innerText = JSON.stringify(data);
 
-      } catch (e) {
-        document.getElementById("msg").innerText = "ERROR CONNECTING";
+        if (data.success) {
+          msg.style.color = "green";
+          msg.innerText = "Register successful! Redirecting...";
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 1500);
+        } else {
+          msg.innerText = data.message || "Registration failed";
+        }
+
+      } catch (error) {
+        msg.innerText = "Error connecting to server";
       }
     }
   </script>
