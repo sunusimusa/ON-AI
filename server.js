@@ -10,7 +10,7 @@ const OpenAI = require("openai");
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ====== OPENAI ======
+// ====== OPENAI CLIENT ======
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
@@ -36,7 +36,7 @@ app.get("/generator", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "generator.html"));
 });
 
-// ====== AUTH APIs (TEMP) ======
+// ====== POST APIs ======
 app.post("/register", async (req, res) => {
   res.json({ success: true });
 });
@@ -45,7 +45,7 @@ app.post("/login", async (req, res) => {
   res.json({ success: true });
 });
 
-// ====== GENERATE IMAGE (OPENAI) ======
+// ====== AI IMAGE GENERATION ======
 app.post("/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -67,7 +67,10 @@ app.post("/generate", async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    res.json({ success: false, message: "Image generation failed" });
+    res.json({
+      success: false,
+      message: "Image generation failed"
+    });
   }
 });
 
