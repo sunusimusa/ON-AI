@@ -32,18 +32,15 @@ app.get("/generator", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "generator.html"));
 });
 
-// ====== FREE IMAGE GENERATOR (NO API KEY) ======
-app.post("/generate", async (req, res) => {
+// ====== FREE IMAGE GENERATOR ======
+app.post("/generate", (req, res) => {
   const { prompt } = req.body;
 
   if (!prompt) {
     return res.json({ success: false, message: "Prompt required" });
   }
 
-  // Unsplash random image
-  const imageUrl =
-    "https://source.unsplash.com/512x512/?" +
-    encodeURIComponent(prompt);
+  const imageUrl = `https://source.unsplash.com/512x512/?${encodeURIComponent(prompt)}`;
 
   res.json({
     success: true,
