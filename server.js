@@ -2,7 +2,6 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
-const axios = require("axios"); // don HTTP requests
 
 // ====== APP ======
 const app = express();
@@ -16,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 // ====== STATIC FILES ======
 app.use(express.static(path.join(__dirname, "public")));
 
-// ====== ROUTES ======
+// ====== PAGES ======
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
@@ -29,31 +28,31 @@ app.get("/generator", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "generator.html"));
 });
 
-// ====== FREE IMAGE GENERATOR (No OpenAI Needed) ======
+// ====== FREE IMAGE API (NO PAYMENT) ======
 app.post("/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
 
     if (!prompt) {
-      return res.json({ success: false, message: "Please provide a prompt" });
+      return res.json({ success: false, message: "Prompt is required" });
     }
 
-    // Amfani da public image API (source.unsplash.com)
-    const imageUrl = `https://source.unsplash.com/512x512/?${encodeURIComponent(prompt)}`;
+    const imageUrl =
+      "https://source.unsplash.com/512x512/?" +
+      encodeURIComponent(prompt);
 
-    // Aika result
     res.json({
       success: true,
-      image: imageUrl,
+      image: imageUrl
     });
 
   } catch (err) {
-    console.error("Error generating image:", err);
+    console.error(err);
     res.json({ success: false, message: "Image generation failed" });
   }
 });
 
 // ====== START SERVER ======
 app.listen(PORT, () => {
-  console.log("✅ Free Image API Server running on port " + PORT);
+  console.log("✅ Free Image Generator running on port " + PORT);
 });
