@@ -11,6 +11,29 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
+}); app.post("/generate", async (req, res) => {
+  try {
+    const { prompt } = req.body;
+
+    if (!prompt) {
+      return res.json({ success: false, message: "Prompt is required" });
+    }
+
+    const result = await openai.images.generate({
+      model: "gpt-image-1",
+      prompt: prompt,
+      size: "512x512"
+    });
+
+    res.json({
+      success: true,
+      image: result.data[0].url
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.json({ success: false, message: "Image generation failed" });
+  }
 });
 // ====== MIDDLEWARES ======
 app.use(cors());
