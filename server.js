@@ -17,10 +17,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // ====== STATIC FILES ======
 app.use(express.static(path.join(__dirname, "public")));
-app.get("/register", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "register.html"));
-});
-// ====== GET PAGES ======   👈 NAN NE
+
+// ====== GET PAGES ======
 app.get("/register", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "register.html"));
 });
@@ -29,13 +27,15 @@ app.get("/login", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
-// ====== POST APIs ======   👈 NAN NE
+// ====== POST APIs ======
 app.post("/register", async (req, res) => {
   // register logic
+  res.json({ success: true });
 });
 
 app.post("/login", async (req, res) => {
   // login logic
+  res.json({ success: true });
 });
 
 // ====== START SERVER ======
