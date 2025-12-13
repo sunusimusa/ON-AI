@@ -1,46 +1,77 @@
-<script>
-async function generateImage() {
-  const prompt = document.getElementById("prompt").value.trim();
-  const msg = document.getElementById("msg");
-  const output = document.getElementById("output");
-  const result = document.getElementById("result");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Image Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
 
-  msg.innerText = "";
-  result.style.display = "none";
+<body style="font-family: Arial; background:#f4f6f9;">
 
-  if (!prompt) {
-    msg.innerText = "Please enter a prompt";
-    return;
-  }
+  <div style="
+    max-width: 500px;
+    margin: 80px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align:center;
+  ">
 
-  msg.innerText = "Generating... ⏳";
+    <h2>AI Image Generator</h2>
 
-  try {
-    const res = await fetch("/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
-    });
+    <textarea id="prompt" placeholder="Describe the image you want..."
+      style="width:100%; height:120px; padding:10px; margin-bottom:15px;"></textarea>
 
-    const data = await res.json();
+    <button onclick="generateImage()"
+      style="width:100%; padding:12px; background:#007bff; color:white; border:none; border-radius:6px;">
+      Generate Image
+    </button>
 
-    if (data.success) {
-      const imageUrl = data.image + "&sig=" + Date.now();
+    <p id="msg" style="margin-top:15px;"></p>
 
-      // nuna hoton a page
-      output.src = imageUrl;
-      result.style.display = "block";
-      msg.innerText = "Done ✅";
+    <img id="output" style="max-width:100%; margin-top:20px; display:none; border-radius:8px;" />
 
-      // buɗe hoton a sabon tab (tabbaci)
-      window.open(imageUrl, "_blank");
+  </div>
 
-    } else {
-      msg.innerText = "Failed ❌";
+  <script>
+    async function generateImage() {
+      const prompt = document.getElementById("prompt").value.trim();
+      const msg = document.getElementById("msg");
+      const output = document.getElementById("output");
+
+      msg.innerText = "";
+      output.style.display = "none";
+
+      if (!prompt) {
+        msg.innerText = "Please enter a prompt ❗";
+        return;
+      }
+
+      msg.innerText = "Generating... ⏳";
+
+      try {
+        const res = await fetch("/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          output.src = data.image + "&sig=" + Date.now();
+          output.style.display = "block";
+          msg.innerText = "Done ✅";
+        } else {
+          msg.innerText = "Failed ❌";
+        }
+
+      } catch (e) {
+        msg.innerText = "Server error ❌";
+      }
     }
+  </script>
 
-  } catch (e) {
-    msg.innerText = "Server error ❌";
-  }
-}
-</script>
+</body>
+</html>
