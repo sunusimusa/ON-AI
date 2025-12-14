@@ -47,10 +47,6 @@ const usage = {};
 app.post("/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
-    const ip =
-      req.headers["x-forwarded-for"] ||
-      req.socket.remoteAddress ||
-      "unknown";
 
     if (!prompt) {
       return res.json({
@@ -59,31 +55,9 @@ app.post("/generate", async (req, res) => {
       });
     }
 
-    // init user
-    if (!usage[ip]) {
-      usage[ip] = { count: 0, date: new Date().toDateString() };
-    }
-
-    // reset daily
-    if (usage[ip].date !== new Date().toDateString()) {
-      usage[ip] = { count: 0, date: new Date().toDateString() };
-    }
-
-    // check limit
-    if (usage[ip].count >= FREE_LIMIT) {
-       return res.json({
-  success: false,
-  limit: true,
-  message: "Free limit reached. Upgrade to Pro 🚀"
-});
-    });
-
-    // count +1
-    usage[ip].count++;
-
     const result = await openai.images.generate({
       model: "gpt-image-1",
-      prompt,
+      prompt: prompt,
       size: "1024x1024"
     });
 
@@ -93,15 +67,11 @@ app.post("/generate", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("IMAGE ERROR:", err?.error || err);
+    console.error("IMAGE ERROR:", err);
+
     return res.json({
       success: false,
-      message: "Image generation failed"
+      message: err?.error?.message || "Image generation failed"
     });
   }
-});
-
-// ===== START SERVER =====
-app.listen(PORT, () => {
-  console.log("✅ Server running on port " + PORT);
 });
