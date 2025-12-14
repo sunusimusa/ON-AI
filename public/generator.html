@@ -33,7 +33,12 @@
 <p id="msg" style="text-align:center; margin-top:10px;"></p>
 
 <img id="output"
-     style="max-width:100%; display:none; margin-top:15px; border-radius:8px;"/>
+     style="max-width:100%; display:none; margin-top:15px; border-radius:8px;" />
+
+<!-- ✅ UPGRADE BUTTON -->
+<p id="upgrade" style="display:none; text-align:center; margin-top:15px;">
+  <a href="/pricing">Upgrade to Pro 🚀</a>
+</p>
 
 </div>
 
@@ -42,14 +47,16 @@ async function generateImage() {
   const prompt = document.getElementById("prompt").value.trim();
   const msg = document.getElementById("msg");
   const img = document.getElementById("output");
+  const upgrade = document.getElementById("upgrade");
+
+  msg.innerText = "Generating...";
+  img.style.display = "none";
+  upgrade.style.display = "none";
 
   if (!prompt) {
     msg.innerText = "Please enter a prompt ❌";
     return;
   }
-
-  msg.innerText = "Generating...";
-  img.style.display = "none";
 
   try {
     const res = await fetch("/generate", {
@@ -60,15 +67,22 @@ async function generateImage() {
 
     const data = await res.json();
 
+    // ✅ FREE LIMIT CHECK
+    if (data.limit) {
+      msg.innerText = data.message;
+      upgrade.style.display = "block";
+      return;
+    }
+
     if (data.success) {
-      img.src = data.image;
+      img.src = data.image + "?t=" + Date.now();
       img.style.display = "block";
       msg.innerText = "Done ✅";
     } else {
-      msg.innerText = data.message || "Generation failed ❌";
+      msg.innerText = data.message || "Image generation failed ❌";
     }
 
-  } catch (e) {
+  } catch (err) {
     msg.innerText = "Server error ❌";
   }
 }
