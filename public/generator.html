@@ -34,14 +34,12 @@
 <img id="output"
      style="max-width:100%; display:none; margin-top:15px; border-radius:8px;" />
 <p id="upgrade" style="display:none; text-align:center; margin-top:15px;">
-  <a href="/pricing">Upgrade to Pro 🚀</a>
-</p>
+  <a href="/pricing">Upgrade to Pro 🚀</a></p>
   
 </p>
   
 </div>
-  
-<script>
+ <script>
 async function generateImage() {
   const prompt = document.getElementById("prompt").value.trim();
   const msg = document.getElementById("msg");
@@ -66,26 +64,30 @@ async function generateImage() {
 
     const data = await res.json();
 
-    // 🔴 FREE LIMIT
+    // 🟡 IDAN FREE LIMIT YA CIKA
     if (data.limit) {
       msg.innerText = data.message;
       upgrade.style.display = "block";
       return;
     }
 
-    // 🟢 SUCCESS
-    if (data.success) {
+    // 🟢 IDAN IMAGE YA SAMU
+    if (data.success && data.image) {
       img.src = data.image + "?t=" + Date.now();
       img.style.display = "block";
       msg.innerText = "Done ✅";
-    } else {
-      msg.innerText = data.message || "Image generation failed ❌";
+      return;
     }
 
+    // 🔴 SAURAN MATSALA
+    msg.innerText = data.message || "Image generation failed ❌";
+
   } catch (err) {
+    console.error(err);
     msg.innerText = "Server error ❌";
   }
 }
-  </script>
+ </script> 
+
 </body>
 </html>
