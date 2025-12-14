@@ -3,7 +3,17 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 const OpenAI = require("openai");
+const fs = require("fs");
+const path = require("path");
 
+const USAGE_FILE = path.join(__dirname, "data", "usage.json");
+const FREE_LIMIT = 3; // misali free images 3 per day
+
+// load usage
+let usage = {};
+if (fs.existsSync(USAGE_FILE)) {
+  usage = JSON.parse(fs.readFileSync(USAGE_FILE, "utf8"));
+}
 const app = express();
 const PORT = process.env.PORT || 10000;
 
