@@ -83,6 +83,16 @@ app.post("/generate", async (req, res) => {
 app.get("/generator", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "generator.html"));
 });
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+app.get("/generator", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "generator.html"));
+});
+app.get("/pricing", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pricing.html"));
+});
 
 app.listen(PORT, () => {
   console.log("✅ Server running on port " + PORT);
