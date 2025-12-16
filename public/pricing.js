@@ -1,4 +1,6 @@
 // pricing.js
+
+// duba ko user ya yi login
 const user = localStorage.getItem("user");
 
 if (!user) {
