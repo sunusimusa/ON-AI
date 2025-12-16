@@ -78,8 +78,13 @@ async function generateImage() {
       img.style.display = "block";
       msg.innerText = "Done ✅";
       return;
-    }
-
+   }
+    if (data.limit) {
+        msg.innerText = data.message;
+        document.getElementById("upgrade").style.display = "block";
+       return;
+   }
+    
     // 🔴 SAURAN MATSALA
     msg.innerText = data.message || "Image generation failed ❌";
 
