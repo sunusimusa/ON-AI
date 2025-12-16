@@ -2,59 +2,91 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Tele Tech AI – Text</title>
+  <title>Tele Tech AI (Text)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body style="font-family:Arial; background:#f4f6f9;">
 
-<div id="chat" style="
-  margin-top:15px;
-  padding:10px;
-  background:#f9f9f9;
-  border-radius:6px;
-  max-height:300px;
-  overflow-y:auto;
-  font-size:14px;
-"></div>
+<div style="
+  max-width:600px;
+  margin:40px auto;
+  padding:20px;
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,.1);
+">
 
-<h2>Tele Tech AI (Text)</h2>
+  <h2 style="text-align:center;">Tele Tech AI (Text)</h2>
 
-<textarea id="msg" placeholder="Ask me anything..."
-  style="width:100%;height:120px;"></textarea>
+  <!-- 🧠 CHAT HISTORY -->
+  <div id="chat" style="
+    border:1px solid #ccc;
+    height:260px;
+    padding:10px;
+    overflow-y:auto;
+    margin-bottom:15px;
+    background:#fafafa;
+  ">
+    <div><b>AI:</b> Sannu! Yaya zan iya taimaka maka?</div>
+  </div>
 
-<br><br>
+  <!-- ✍️ INPUT -->
+  <textarea id="msg"
+    placeholder="Rubuta sakonka a nan..."
+    style="width:100%; height:80px; padding:8px;"></textarea>
 
-<button onclick="sendMsg()">Send</button>
-
-<p id="reply" style="margin-top:15px;"></p>
+  <button onclick="sendMsg()"
+    style="margin-top:10px; padding:10px 16px;">
+    Send
+  </button>
 
 </div>
 
 <script>
 async function sendMsg() {
-  const msg = document.getElementById("msg").value.trim();
-  const reply = document.getElementById("reply");
+  const input = document.getElementById("msg");
+  const chat = document.getElementById("chat");
+  const message = input.value.trim();
 
-  if (!msg) {
-    reply.innerText = "Please type a message ❌";
-    return;
-  }
+  if (!message) return;
 
-  reply.innerText = "Thinking...";
+  // 🧍‍♂️ User message
+  chat.innerHTML += `
+    <div style="margin-bottom:8px;">
+      <b>You:</b> ${message}
+    </div>
+  `;
+
+  input.value = "";
+  chat.scrollTop = chat.scrollHeight;
+
+  // 🤖 Thinking...
+  const thinkingId = "thinking-" + Date.now();
+  chat.innerHTML += `
+    <div id="${thinkingId}" style="color:gray;">
+      <b>AI:</b> Thinking...
+    </div>
+  `;
+  chat.scrollTop = chat.scrollHeight;
 
   try {
     const res = await fetch("/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: msg })
+      body: JSON.stringify({ message })
     });
 
     const data = await res.json();
-    reply.innerText = data.success ? data.reply : "Error ❌";
+
+    document.getElementById(thinkingId).innerHTML = `
+      <b>AI:</b> ${data.success ? data.reply : "Error"}
+    `;
+    chat.scrollTop = chat.scrollHeight;
 
   } catch (e) {
-    reply.innerText = "Server error ❌";
+    document.getElementById(thinkingId).innerHTML =
+      "<b>AI:</b> Server error ❌";
   }
 }
 </script>
