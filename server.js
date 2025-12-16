@@ -1,7 +1,7 @@
 // ===== IMPORTS =====
 const express = require("express");
 const path = require("path");
-const fs = require("fs"); // ✅ WANNAN YA KASANCE
+const fs = require("fs");
 const OpenAI = require("openai");
 
 const app = express();
@@ -16,35 +16,70 @@ const openai = new OpenAI({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ SERVE PUBLIC FILES
+// ===== SERVE STATIC FILES =====
 app.use(express.static(path.join(__dirname, "public")));
 
 // ===== PAGE ROUTES =====
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
+
+app.get("/login", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "login.html"))
+);
+
+app.get("/register", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "register.html"))
+);
+
+app.get("/generator", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "generator.html"))
+);
+
+app.get("/pricing", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "pricing.html"))
+);
+
+// ===== USERS FILE =====
+const usersFile = path.join(__dirname, "data", "users.json");
+
+// ===== LOGIN API =====
+app.post("/login", (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.json({
+      success: false,
+      message: "All fields are required"
+    });
+  }
+
+  let users = [];
+  if (fs.existsSync(usersFile)) {
+    users = JSON.parse(fs.readFileSync(usersFile, "utf8"));
+  }
+
+  const user = users.find(
+    u =>
+      (u.username === username || u.email === username) &&
+      u.password === password
+  );
+
+  if (!user) {
+    return res.json({
+      success: false,
+      message: "Invalid login details"
+    });
+  }
+
+  return res.json({
+    success: true,
+    username: user.username,
+    plan: user.plan || "free"
+  });
 });
 
-app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
-});
-
-app.get("/register", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "register.html"));
-});
-
-app.get("/generator", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "generator.html"));
-});
-
-app.get("/pricing", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "pricing.html"));
-});
-
-// ===== FREE LIMIT (zamu yi amfani da shi daga baya) =====
-const FREE_LIMIT = 3;
-const usage = {};
-
-// ===== GENERATE IMAGE API =====
+// ===== IMAGE GENERATION =====
 app.post("/generate", async (req, res) => {
   try {
     const { prompt } = req.body;
@@ -58,21 +93,20 @@ app.post("/generate", async (req, res) => {
 
     const result = await openai.images.generate({
       model: "gpt-image-1",
-      prompt: prompt,
+      prompt,
       size: "1024x1024"
     });
 
-    return res.json({
+    res.json({
       success: true,
       image: result.data[0].url
     });
 
   } catch (err) {
     console.error("IMAGE ERROR:", err);
-
-    return res.json({
+    res.json({
       success: false,
-      message: err?.error?.message || "Image generation failed"
+      message: "Image generation failed"
     });
   }
 });
