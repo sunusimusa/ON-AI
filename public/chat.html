@@ -6,28 +6,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body { font-family: Arial; background:#f4f6f9; }
+body {
+  font-family: Arial;
+  background: #f4f6f9;
+}
 .box {
-  max-width:600px;
-  margin:30px auto;
-  background:#fff;
-  padding:15px;
-  border-radius:8px;
+  max-width: 600px;
+  margin: 30px auto;
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
 }
 #chat {
-  min-height:300px;
-  border:1px solid #ccc;
-  padding:10px;
-  margin-bottom:10px;
+  min-height: 300px;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
 }
-.msg { margin-bottom:6px; }
-.user { color:#007bff; }
-.ai { color:#000; }
+.msg {
+  margin-bottom: 6px;
+}
+.user { color: #007bff; }
+.ai { color: #000; }
 .delete {
-  color:red;
-  cursor:pointer;
-  margin-left:6px;
-  font-weight:bold;
+  color: red;
+  cursor: pointer;
+  margin-left: 6px;
 }
 </style>
 </head>
@@ -39,8 +43,8 @@ body { font-family: Arial; background:#f4f6f9; }
 
   <div id="chat"></div>
 
-  <input id="msg" placeholder="Rubuta sakonka..." style="width:70%">
-  <button type="button" onclick="sendMsg()">Send</button>
+  <input id="msg" placeholder="Rubuta sakonka..." style="width:75%">
+  <button id="sendBtn">Send</button>
 </div>
 
 <script>
@@ -48,68 +52,45 @@ const chat = document.getElementById("chat");
 const input = document.getElementById("msg");
 const sendBtn = document.getElementById("sendBtn");
 
-/* ===== PLAN ===== */
-const user = JSON.parse(localStorage.getItem("user") || "{}");
-const plan = user.plan || "free";
-
-/* ===== FREE LIMIT ===== */
-const FREE_LIMIT = 10;
-const TODAY = new Date().toDateString();
-let usage = JSON.parse(localStorage.getItem("usage") || "{}");
-
-if (usage.date !== TODAY) {
-  usage = { date: TODAY, count: 0 };
-  localStorage.setItem("usage", JSON.stringify(usage));
-}
-
-/* ===== LOAD CHAT ===== */
+/* LOAD SAVED CHAT */
 const saved = JSON.parse(localStorage.getItem("chatData") || "[]");
 saved.forEach(addToChat);
 
-/* ===== SEND MESSAGE ===== */
+/* SEND BUTTON */
 sendBtn.onclick = sendMsg;
 
 async function sendMsg() {
   const text = input.value.trim();
   if (!text) return;
 
-  if (plan === "free" && usage.count >= FREE_LIMIT) {
-    alert("Free limit reached. Please upgrade to Pro 🚀");
-    return;
-  }
-
-  const userMsg = { role:"You", text };
+  const userMsg = { role: "You", text };
   saveMsg(userMsg);
   addToChat(userMsg);
-
   input.value = "";
 
   try {
     const res = await fetch("/chat", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ message:text })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
     });
-    const data = await res.json();
 
-    const aiMsg = { role:"AI", text:data.reply || "Error" };
+    const data = await res.json();
+    const aiMsg = { role: "AI", text: data.reply || "Error" };
     saveMsg(aiMsg);
     addToChat(aiMsg);
 
-    usage.count++;
-    localStorage.setItem("usage", JSON.stringify(usage));
-
   } catch {
-    const aiMsg = { role:"AI", text:"Server error" };
+    const aiMsg = { role: "AI", text: "Server error" };
     saveMsg(aiMsg);
     addToChat(aiMsg);
   }
 }
 
-/* ===== UI ===== */
+/* SHOW MESSAGE */
 function addToChat(msg) {
   const div = document.createElement("div");
-  div.className = `msg ${msg.role === "You" ? "user" : "ai"}`;
+  div.className = "msg " + (msg.role === "You" ? "user" : "ai");
   div.innerHTML = `
     <b>${msg.role}:</b> ${msg.text}
     <span class="delete" onclick="deleteMsg(this)">❌</span>
@@ -118,17 +99,17 @@ function addToChat(msg) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* ===== SAVE ===== */
+/* SAVE */
 function saveMsg(msg) {
   const data = JSON.parse(localStorage.getItem("chatData") || "[]");
   data.push(msg);
   localStorage.setItem("chatData", JSON.stringify(data));
 }
 
-/* ===== DELETE ONE ===== */
+/* DELETE ONE */
 function deleteMsg(el) {
   const div = el.parentElement;
-  const text = div.innerText.replace("❌","").trim();
+  const text = div.innerText.replace("❌", "").trim();
 
   let data = JSON.parse(localStorage.getItem("chatData") || "[]");
   data = data.filter(m => !text.includes(m.text));
