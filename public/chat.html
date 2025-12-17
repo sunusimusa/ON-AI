@@ -46,7 +46,7 @@ body {
   <input id="msg" placeholder="Rubuta sakonka..." style="width:75%">
   <button id="sendBtn">Send</button>
 </div>
-<script>
+  
 /* ===== PLAN & LIMIT ===== */
 const FREE_LIMIT = 10; // free messages per day
 
@@ -120,10 +120,8 @@ sendBtn.onclick = sendMsg;
     addToChat(aiMsg);
   }
 }
-  const text = input.value.trim();
-  if (!text) return;
-
-  const (userMsg) = { role: "You", text };
+  
+  const userMsg = { role: "You", text };
   saveMsg(userMsg);
   addToChat(userMsg);
   input.value = "";
