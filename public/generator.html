@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tele Tech AI (Text)</title>
+<title>Tele Tech AI (Chat)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -12,7 +12,7 @@ body {
 }
 .container {
   max-width: 600px;
-  margin: 20px auto;
+  margin: 30px auto;
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0,0,0,.1);
@@ -21,10 +21,7 @@ body {
   flex-direction: column;
   height: 85vh;
 }
-h2 {
-  text-align: center;
-  margin-bottom: 10px;
-}
+h2 { text-align: center; margin-bottom: 10px; }
 #chat {
   flex: 1;
   overflow-y: auto;
@@ -41,51 +38,46 @@ h2 {
 }
 .user { justify-content: flex-end; }
 .ai { justify-content: flex-start; }
-
 .bubble {
-  padding: 8px 12px;
+  padding: 6px 10px;
   border-radius: 12px;
   max-width: 80%;
   word-wrap: break-word;
-  font-size: 14px;
 }
-.user .bubble {
-  background: #007bff;
-  color: #fff;
-}
-.ai .bubble {
-  background: #e9e9e9;
-  color: #000;
-}
+.user .bubble { background:#007bff; color:#fff; }
+.ai .bubble { background:#e9e9e9; color:#000; }
 .delete {
-  cursor: pointer;
-  color: red;
-  font-size: 14px;
+  cursor:pointer;
+  color:red;
+  font-size:14px;
 }
 .input-box {
-  display: flex;
-  gap: 6px;
+  display:flex;
+  gap:6px;
   margin-top: 8px;
 }
 textarea {
-  flex: 1;
-  resize: none;
-  height: 45px;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  flex:1;
+  resize:none;
+  height:50px;
+  padding:8px;
+  border-radius:6px;
+  border:1px solid #ccc;
 }
 button {
-  background: #28a745;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0 16px;
-  cursor: pointer;
+  background:#28a745;
+  color:white;
+  border:none;
+  border-radius:6px;
+  padding:0 16px;
 }
-.clear-btn {
-  margin-top: 6px;
-  background: #dc3545;
+.top-actions {
+  text-align:center;
+  margin-bottom:6px;
+}
+.top-actions button {
+  background:#dc3545;
+  margin-left:5px;
 }
 </style>
 </head>
@@ -95,26 +87,28 @@ button {
 <div class="container">
   <h2>Tele Tech AI (Text)</h2>
 
+  <div class="top-actions">
+    <button onclick="clearChat()">Clear Chat</button>
+  </div>
+
   <div id="chat"></div>
 
   <div class="input-box">
     <textarea id="msg" placeholder="Type your message..."></textarea>
     <button onclick="sendMsg()">Send</button>
   </div>
-
-  <button class="clear-btn" onclick="clearChat()">Clear all chat</button>
 </div>
 
 <script>
-/* ===== CONFIG ===== */
-const FREE_LIMIT = 5;
-const RESET_HOURS = 8;
+/* ===== FREE LIMIT CONFIG ===== */
+const FREE_LIMIT = 5;      // messages
+const RESET_HOURS = 8;     // reset after 8 hours
 
 /* ===== USER PLAN ===== */
 const user = JSON.parse(localStorage.getItem("user") || "{}");
 const plan = user.plan || "free";
 
-/* ===== USAGE TRACKING ===== */
+/* ===== USAGE TRACK ===== */
 let usageData = JSON.parse(localStorage.getItem("usageData") || "{}");
 const now = Date.now();
 
@@ -128,48 +122,54 @@ function loadChat() {
   const chat = document.getElementById("chat");
   const history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
   chat.innerHTML = "";
-
-  history.forEach((m, i) => {
-    const div = document.createElement("div");
-    div.className = `msg ${m.role}`;
-    div.dataset.index = i;
-    div.innerHTML = `
-      <span class="delete" onclick="deleteMsg(${i})">❌</span>
-      <div class="bubble">${m.text}</div>
-    `;
-    chat.appendChild(div);
-  });
-
+  history.forEach(m => addMsg(m.role, m.text, false));
   chat.scrollTop = chat.scrollHeight;
 }
-loadChat();
 
-/* ===== SAVE MESSAGE ===== */
-function saveMessage(role, text) {
+/* ===== SAVE CHAT ===== */
+function saveMsg(role, text) {
   const history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
   history.push({ role, text });
   localStorage.setItem("chatHistory", JSON.stringify(history));
 }
 
-/* ===== DELETE SINGLE MESSAGE ===== */
-function deleteMsg(index) {
+/* ===== ADD MESSAGE ===== */
+function addMsg(role, text, save=true) {
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.className = "msg " + role;
+  div.innerHTML = `
+    <span class="delete" onclick="deleteMsg(this)">❌</span>
+    <div class="bubble">${text}</div>
+  `;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  if (save) saveMsg(role, text);
+}
+
+/* ===== DELETE SINGLE ===== */
+function deleteMsg(el) {
+  const msgDiv = el.parentElement;
+  const text = msgDiv.querySelector(".bubble").innerText;
+  const role = msgDiv.classList.contains("user") ? "user" : "ai";
+
   let history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-  history.splice(index, 1);
+  history = history.filter(m => !(m.text === text && m.role === role));
   localStorage.setItem("chatHistory", JSON.stringify(history));
-  loadChat();
+
+  msgDiv.remove();
 }
 
 /* ===== CLEAR ALL ===== */
 function clearChat() {
   if (!confirm("Delete all chat messages?")) return;
   localStorage.removeItem("chatHistory");
-  loadChat();
+  document.getElementById("chat").innerHTML = "";
 }
 
 /* ===== SEND MESSAGE ===== */
 async function sendMsg() {
   const input = document.getElementById("msg");
-  const chat = document.getElementById("chat");
   const message = input.value.trim();
   if (!message) return;
 
@@ -178,39 +178,32 @@ async function sendMsg() {
     return;
   }
 
-  // USER
-  saveMessage("user", message);
-  loadChat();
+  addMsg("user", message);
   input.value = "";
 
-  // AI thinking
-  saveMessage("ai", "Thinking...");
-  loadChat();
+  addMsg("ai", "Thinking...", false);
+  const lastAI = document.querySelector("#chat .ai:last-child .bubble");
 
   try {
     const res = await fetch("/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message })
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ message })
     });
     const data = await res.json();
 
-    let history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-    history[history.length - 1].text =
-      data.success ? data.reply : "Error ❌";
-    localStorage.setItem("chatHistory", JSON.stringify(history));
+    lastAI.innerText = data.success ? data.reply : "Error ❌";
 
     usageData.count++;
     localStorage.setItem("usageData", JSON.stringify(usageData));
-    loadChat();
+    saveMsg("ai", lastAI.innerText);
 
   } catch {
-    let history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-    history[history.length - 1].text = "Server error ❌";
-    localStorage.setItem("chatHistory", JSON.stringify(history));
-    loadChat();
+    lastAI.innerText = "Server error ❌";
   }
 }
+
+loadChat();
 </script>
 
 </body>
