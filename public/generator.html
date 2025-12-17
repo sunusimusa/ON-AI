@@ -73,7 +73,7 @@
     .delete {
       cursor: pointer;
       color: red;
-      font-size: 14px;
+      font-size: 13px;
     }
 
     .input-box {
@@ -98,6 +98,14 @@
       color: white;
       cursor: pointer;
     }
+
+    #upgrade {
+      display: none;
+      text-align: center;
+      margin-top: 10px;
+      color: red;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -108,6 +116,11 @@
 
   <div id="chat"></div>
 
+  <div id="upgrade">
+    Free limit ya cika.  
+    <a href="/pricing">Upgrade zuwa Pro 🚀</a>
+  </div>
+
   <div class="input-box">
     <textarea id="msg" placeholder="Rubuta sakonka a nan..."></textarea>
     <button onclick="sendMsg()">Send</button>
@@ -116,8 +129,8 @@
 
 <script>
   // ===== PLAN & LIMIT =====
-  let usage = parseInt(localStorage.getItem("usage") || "0");
   const FREE_LIMIT = 5;
+  let usage = parseInt(localStorage.getItem("usage") || "0");
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const plan = user.plan || "free";
@@ -128,15 +141,13 @@
 
   async function sendMsg() {
     if (plan === "free" && usage >= FREE_LIMIT) {
-      alert("Free limit full. Ka upgrade zuwa Pro 🚀");
-      window.location.href = "/pricing.html";
+      document.getElementById("upgrade").style.display = "block";
       return;
     }
 
     const input = document.getElementById("msg");
     const chat = document.getElementById("chat");
     const message = input.value.trim();
-
     if (!message) return;
 
     // USER MESSAGE
