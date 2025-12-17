@@ -1,68 +1,48 @@
 const express = require("express");
 const path = require("path");
-const fs = require("fs");
+const OpenAI = require("openai");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 
-const usersFile = path.join(__dirname, "data", "users.json");
-
-// ===== REGISTER =====
-app.post("/register", (req, res) => {
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.json({ success: false, message: "Fill all fields" });
-  }
-
-  let users = [];
-  if (fs.existsSync(usersFile)) {
-    users = JSON.parse(fs.readFileSync(usersFile));
-  }
-
-  if (users.find(u => u.username === username)) {
-    return res.json({ success: false, message: "User already exists" });
-  }
-
-  users.push({ username, password });
-  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
-
-  res.json({ success: true });
-});
-
-// ===== LOGIN =====
-app.post("/login", (req, res) => {
-  const { username, password } = req.body;
-
-  let users = [];
-  if (fs.existsSync(usersFile)) {
-    users = JSON.parse(fs.readFileSync(usersFile));
-  }
-
-  const user = users.find(
-    u => u.username === username && u.password === password
-  );
-
-  if (!user) {
-    return res.json({ success: false, message: "Wrong login" });
-  }
-
-  res.json({ success: true, username });
-});
-
-// ===== CHAT (DUMMY AI FOR NOW) =====
-app.post("/chat", (req, res) => {
+/* ===== CHAT API ===== */
+app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
-  // yanzu fake AI ne
-  res.json({
-    success: true,
-    reply: "Na ji ka: " + message
-  });
+  if (!message) {
+    return res.json({ success: false, reply: "No message" });
+  }
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a helpful Hausa & English assistant." },
+        { role: "user", content: message }
+      ]
+    });
+
+    const reply = completion.choices[0].message.content;
+
+    res.json({
+      success: true,
+      reply
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.json({
+      success: false,
+      reply: "AI error"
+    });
+  }
 });
 
 app.listen(PORT, () => {
