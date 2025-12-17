@@ -62,6 +62,7 @@ const today = new Date().toDateString();
 if (usage.date !== today) {
   usage = { count: 0, date: today };
   localStorage.setItem("usage", JSON.stringify(usage));
+}
 
 const chat = document.getElementById("chat");
 const input = document.getElementById("msg");
