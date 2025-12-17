@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tele Tech AI (Chat)</title>
+<title>Tele Tech AI – Chat</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -12,14 +12,14 @@ body {
 }
 .container {
   max-width: 600px;
-  margin: 30px auto;
+  margin: 40px auto;
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0,0,0,.1);
-  padding: 15px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  height: 85vh;
+  height: 80vh;
 }
 h2 {
   text-align: center;
@@ -35,34 +35,28 @@ h2 {
 }
 .msg {
   display: flex;
+  align-items: center;
   gap: 6px;
   margin-bottom: 8px;
 }
 .user { justify-content: flex-end; }
 .ai { justify-content: flex-start; }
 .bubble {
-  padding: 8px 12px;
-  border-radius: 14px;
-  max-width: 75%;
+  padding: 6px 10px;
+  border-radius: 12px;
+  max-width: 80%;
   word-wrap: break-word;
 }
-.user .bubble {
-  background:#007bff;
-  color:#fff;
-}
-.ai .bubble {
-  background:#e9e9e9;
-  color:#000;
-}
+.user .bubble { background:#007bff; color:#fff; }
+.ai .bubble { background:#e9e9e9; color:#000; }
 .delete {
   cursor:pointer;
   color:red;
-  font-size:13px;
+  font-size:14px;
 }
 .input-box {
   display:flex;
   gap:6px;
-  margin-top:10px;
 }
 textarea {
   flex:1;
@@ -80,16 +74,6 @@ button {
   padding:0 16px;
   cursor:pointer;
 }
-.top-actions {
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:8px;
-}
-.clear {
-  background:#dc3545;
-  padding:4px 10px;
-  font-size:12px;
-}
 </style>
 </head>
 
@@ -97,11 +81,6 @@ button {
 
 <div class="container">
   <h2>Tele Tech AI (Text)</h2>
-
-  <div class="top-actions">
-    <button class="clear" onclick="clearChat()">Clear All</button>
-    <small id="limitInfo"></small>
-  </div>
 
   <div id="chat"></div>
 
@@ -121,12 +100,12 @@ const user = JSON.parse(localStorage.getItem("user") || "{}");
 const plan = user.plan || "free";
 
 /* ===== USAGE ===== */
-let usage = JSON.parse(localStorage.getItem("usage") || "{}");
+let usageData = JSON.parse(localStorage.getItem("usageData") || "{}");
 const now = Date.now();
 
-if (!usage.start || (now - usage.start) > RESET_HOURS * 60 * 60 * 1000) {
-  usage = { count: 0, start: now };
-  localStorage.setItem("usage", JSON.stringify(usage));
+if (!usageData.startTime || (now - usageData.startTime) > RESET_HOURS * 60 * 60 * 1000) {
+  usageData = { count: 0, startTime: now };
+  localStorage.setItem("usageData", JSON.stringify(usageData));
 }
 
 /* ===== CHAT STORAGE ===== */
@@ -134,95 +113,89 @@ function loadChat() {
   const chat = document.getElementById("chat");
   const saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
   chat.innerHTML = "";
-  saved.forEach(m => renderMsg(m.role, m.text, false));
+  saved.forEach(m => renderMsg(m.role, m.text));
   chat.scrollTop = chat.scrollHeight;
 }
 
-function saveMsg(role, text) {
+function saveMessage(role, text) {
   const saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
   saved.push({ role, text });
   localStorage.setItem("chatHistory", JSON.stringify(saved));
 }
 
-function deleteMsg(el) {
-  const div = el.parentElement;
-  const text = div.querySelector(".bubble").innerText;
-  const role = div.classList.contains("user") ? "user" : "ai";
-  let saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-  saved = saved.filter(m => !(m.role === role && m.text === text));
-  localStorage.setItem("chatHistory", JSON.stringify(saved));
-  div.remove();
-}
-
-function clearChat() {
-  if (!confirm("Delete all chats?")) return;
-  localStorage.removeItem("chatHistory");
-  document.getElementById("chat").innerHTML = "";
-}
-
-/* ===== UI ===== */
-function renderMsg(role, text, save=true) {
+function renderMsg(role, text) {
   const chat = document.getElementById("chat");
   const div = document.createElement("div");
-  div.className = `msg ${role}`;
+  div.className = "msg " + role;
   div.innerHTML = `
     <span class="delete" onclick="deleteMsg(this)">❌</span>
     <div class="bubble">${text}</div>
   `;
   chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-  if (save) saveMsg(role, text);
 }
 
-/* ===== SEND ===== */
+/* ===== DELETE SINGLE MESSAGE ===== */
+function deleteMsg(el) {
+  const msgDiv = el.parentElement;
+  const text = msgDiv.querySelector(".bubble").innerText;
+  const role = msgDiv.classList.contains("user") ? "user" : "ai";
+
+  let saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
+  saved = saved.filter(m => !(m.text === text && m.role === role));
+  localStorage.setItem("chatHistory", JSON.stringify(saved));
+
+  msgDiv.remove();
+}
+
+/* ===== SEND MESSAGE ===== */
 async function sendMsg() {
   const input = document.getElementById("msg");
   const message = input.value.trim();
   if (!message) return;
 
-  if (plan === "free" && usage.count >= FREE_LIMIT) {
+  if (plan === "free" && usageData.count >= FREE_LIMIT) {
     alert("Free limit reached. Please upgrade to Pro 🚀");
     return;
   }
 
   renderMsg("user", message);
+  saveMessage("user", message);
   input.value = "";
 
-  const thinking = "thinking-" + Date.now();
-  renderMsg("ai", "Thinking...", false);
-  const lastAI = document.querySelectorAll(".ai .bubble");
-  const aiBubble = lastAI[lastAI.length - 1];
+  const id = "ai-" + Date.now();
+  renderMsg("ai", "Thinking...");
+  saveMessage("ai", "Thinking...");
 
   try {
     const res = await fetch("/chat", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ message })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message })
     });
+
     const data = await res.json();
-    aiBubble.innerText = data.success ? data.reply : "Error ❌";
-    saveMsg("ai", aiBubble.innerText);
-    usage.count++;
-    localStorage.setItem("usage", JSON.stringify(usage));
+    const reply = data.success ? data.reply : "Error ❌";
+
+    let saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
+    saved[saved.length - 1].text = reply;
+    localStorage.setItem("chatHistory", JSON.stringify(saved));
+
+    document.querySelectorAll(".ai .bubble").forEach((b,i,arr)=>{
+      if(i === arr.length-1) b.innerText = reply;
+    });
+
+    usageData.count++;
+    localStorage.setItem("usageData", JSON.stringify(usageData));
+
   } catch {
-    aiBubble.innerText = "Server error ❌";
-  }
-
-  updateLimitInfo();
-}
-
-function updateLimitInfo() {
-  const el = document.getElementById("limitInfo");
-  if (plan === "free") {
-    el.innerText = `Free: ${usage.count}/${FREE_LIMIT}`;
-  } else {
-    el.innerText = "Pro User 🚀";
+    document.querySelectorAll(".ai .bubble").forEach((b,i,arr)=>{
+      if(i === arr.length-1) b.innerText = "Server error ❌";
+    });
   }
 }
 
-/* ===== INIT ===== */
+/* LOAD CHAT ON OPEN */
 loadChat();
-updateLimitInfo();
 </script>
 
 </body>
