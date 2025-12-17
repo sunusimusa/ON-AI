@@ -20,14 +20,12 @@ body { font-family: Arial; background:#f4f6f9; }
   padding:10px;
   margin-bottom:10px;
 }
-.msg { margin-bottom:8px; }
-.user { color:#007bff; }
-.ai { color:#000; }
+.user { color:#007bff; margin-bottom:6px; }
+.ai { color:#000; margin-bottom:10px; }
 .delete {
   color:red;
   cursor:pointer;
   margin-left:6px;
-  font-weight:bold;
 }
 </style>
 </head>
@@ -39,108 +37,61 @@ body { font-family: Arial; background:#f4f6f9; }
 
   <div id="chat"></div>
 
-  <input id="msg" placeholder="Type your message..." style="width:75%">
-  <button onclick="sendMsg()">Send</button>
+  <input id="msg" placeholder="Rubuta sakonka..." style="width:70%">
+  <button id="sendBtn">Send</button>
 </div>
 
 <script>
-/* ===== FREE / PRO CONFIG ===== */
-const FREE_LIMIT = 10; // free = 10 messages per day
-
-/* ===== LOAD USER ===== */
-const user = JSON.parse(localStorage.getItem("user") || "{}");
-const plan = user.plan || "free";
-
-/* ===== USAGE (PER DAY) ===== */
-let usage = JSON.parse(localStorage.getItem("usage") || "{}");
-const today = new Date().toDateString();
-
-if (!usage.date || usage.date !== today) {
-  usage = { date: today, count: 0 };
-  localStorage.setItem("usage", JSON.stringify(usage));
-}
-
-/* ===== CHAT STORAGE ===== */
 const chat = document.getElementById("chat");
 const input = document.getElementById("msg");
+const sendBtn = document.getElementById("sendBtn");
 
-loadChat();
+/* LOAD OLD CHAT */
+chat.innerHTML = localStorage.getItem("chatHistory") || "";
 
-/* ===== SEND MESSAGE ===== */
+/* CLICK EVENT */
+sendBtn.addEventListener("click", sendMsg);
+
 async function sendMsg() {
   const text = input.value.trim();
   if (!text) return;
 
-  // 🚫 FREE LIMIT CHECK
-  if (plan === "free" && usage.count >= FREE_LIMIT) {
-    alert("Free limit reached. Upgrade to Pro 🚀");
-    return;
-  }
-
-  const userMsg = { role:"You", text };
-  saveMsg(userMsg);
-  addToChat(userMsg);
-
+  chat.innerHTML += `
+    <div class="user">
+      <b>You:</b> ${text}
+      <span class="delete" onclick="this.parentElement.remove()">❌</span>
+    </div>
+  `;
   input.value = "";
+  saveChat();
 
   try {
     const res = await fetch("/chat", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ message:text })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
     });
 
     const data = await res.json();
 
-    const aiMsg = { role:"AI", text: data.reply || "Error" };
-    saveMsg(aiMsg);
-    addToChat(aiMsg);
-
-    usage.count++;
-    localStorage.setItem("usage", JSON.stringify(usage));
+    chat.innerHTML += `
+      <div class="ai">
+        <b>AI:</b> ${data.reply || "Error"}
+        <span class="delete" onclick="this.parentElement.remove()">❌</span>
+      </div>
+    `;
+    saveChat();
 
   } catch {
-    const aiMsg = { role:"AI", text:"Server error" };
-    saveMsg(aiMsg);
-    addToChat(aiMsg);
+    chat.innerHTML += `<div class="ai"><b>AI:</b> Server error</div>`;
+    saveChat();
   }
-}
 
-/* ===== UI ===== */
-function addToChat(msg) {
-  const div = document.createElement("div");
-  div.className = "msg " + (msg.role === "You" ? "user" : "ai");
-  div.innerHTML = `
-    <b>${msg.role}:</b> ${msg.text}
-    <span class="delete" onclick="deleteMsg(this)">❌</span>
-  `;
-  chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
 
-/* ===== STORAGE ===== */
-function saveMsg(msg) {
-  const data = JSON.parse(localStorage.getItem("chatData") || "[]");
-  data.push(msg);
-  localStorage.setItem("chatData", JSON.stringify(data));
-}
-
-function loadChat() {
-  const data = JSON.parse(localStorage.getItem("chatData") || "[]");
-  chat.innerHTML = "";
-  data.forEach(addToChat);
-}
-
-/* ===== DELETE ONE MESSAGE ===== */
-function deleteMsg(el) {
-  const msgDiv = el.parentElement;
-  const text = msgDiv.innerText.replace("❌","").trim();
-
-  let data = JSON.parse(localStorage.getItem("chatData") || "[]");
-  data = data.filter(m => !text.includes(m.text));
-  localStorage.setItem("chatData", JSON.stringify(data));
-
-  msgDiv.remove();
+function saveChat() {
+  localStorage.setItem("chatHistory", chat.innerHTML);
 }
 </script>
 
