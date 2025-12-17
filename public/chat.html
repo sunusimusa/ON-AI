@@ -51,11 +51,13 @@ body {
 const FREE_LIMIT = 10; // free messages per day
 
 // Karanta user
-const user = JSON.parse(localStorage.getItem("user") || "{}");
+const user = 
+JSON.parse(localStorage.getItem("user") || "{}");
 const plan = user.plan || "free";
 
 // Karanta usage
-let usage = JSON.parse(localStorage.getItem("usage") || "{}");
+let usage = 
+JSON.parse(localStorage.getItem("usage") || "{}");
 const today = new Date().toDateString();
 
 // Reset idan sabuwar rana
@@ -64,10 +66,14 @@ if (usage.date !== today) {
   localStorage.setItem("usage", JSON.stringify(usage));
 }
 
-const chat = document.getElementById("chat");
-const input = document.getElementById("msg");
-const sendBtn = document.getElementById("sendBtn");
-
+const chat = 
+document.getElementById("chat");
+const inpt = 
+document.getElementById("msg");
+const sendBtn = 
+document.getElementById("sendBtn"); 
+<script>
+  
 /* LOAD SAVED CHAT */
 const saved = JSON.parse(localStorage.getItem("chatData") || "[]");
 saved.forEach(addToChat);
