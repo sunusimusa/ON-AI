@@ -7,38 +7,42 @@
 
 <style>
 body {
-  font-family: Arial;
-  background:#f4f6f9;
+  font-family: Arial, sans-serif;
+  background: #f4f6f9;
 }
+
 .box {
-  max-width:600px;
-  margin:30px auto;
-  background:#fff;
-  padding:15px;
-  border-radius:8px;
+  max-width: 600px;
+  margin: 30px auto;
+  background: #fff;
+  padding: 15px;
+  border-radius: 8px;
 }
+
 #chat {
-  min-height:300px;
-  border:1px solid #ccc;
-  padding:10px;
-  margin-bottom:10px;
+  border: 1px solid #ccc;
+  min-height: 300px;
+  padding: 10px;
+  margin-bottom: 10px;
 }
+
 .msg {
-  margin-bottom:6px;
+  margin-bottom: 8px;
 }
-.user { color:#007bff; }
-.ai { color:#000; }
+
+.user {
+  color: #007bff;
+}
+
+.ai {
+  color: #000;
+}
+
 .delete {
-  color:red;
-  cursor:pointer;
-  margin-left:6px;
-  font-weight:bold;
-}
-input {
-  width:75%;
-}
-button {
-  padding:4px 10px;
+  color: red;
+  cursor: pointer;
+  font-weight: bold;
+  margin-left: 6px;
 }
 </style>
 </head>
@@ -50,7 +54,7 @@ button {
 
   <div id="chat"></div>
 
-  <input id="msg" placeholder="Rubuta sakonka...">
+  <input id="msg" placeholder="Rubuta sakonka..." style="width:75%">
   <button onclick="sendMsg()">Send</button>
 </div>
 
@@ -59,63 +63,68 @@ const chat = document.getElementById("chat");
 const input = document.getElementById("msg");
 
 /* LOAD CHAT */
-loadChat();
-
-function loadChat() {
-  chat.innerHTML = localStorage.getItem("chatHistory") || "";
-}
-
-/* SAVE CHAT */
-function saveChat() {
-  localStorage.setItem("chatHistory", chat.innerHTML);
-}
-
-/* DELETE MESSAGE */
-function deleteMsg(el) {
-  el.parentElement.remove();
-  saveChat();
-}
+const saved = JSON.parse(localStorage.getItem("chatData") || "[]");
+saved.forEach(addToChat);
 
 /* SEND MESSAGE */
 async function sendMsg() {
   const text = input.value.trim();
   if (!text) return;
 
-  chat.innerHTML += `
-    <div class="msg user">
-      <b>You:</b> ${text}
-      <span class="delete" onclick="deleteMsg(this)">❌</span>
-    </div>
-  `;
+  const userMsg = { role: "You", text };
+  saveMsg(userMsg);
+  addToChat(userMsg);
+
   input.value = "";
-  saveChat();
 
   try {
     const res = await fetch("/chat", {
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
-      body:JSON.stringify({ message: text })
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
     });
 
     const data = await res.json();
 
-    chat.innerHTML += `
-      <div class="msg ai">
-        <b>AI:</b> ${data.reply || "Error"}
-        <span class="delete" onclick="deleteMsg(this)">❌</span>
-      </div>
-    `;
-    saveChat();
+    const aiMsg = { role: "AI", text: data.reply || "Error" };
+    saveMsg(aiMsg);
+    addToChat(aiMsg);
 
   } catch {
-    chat.innerHTML += `
-      <div class="msg ai">
-        <b>AI:</b> Server error
-        <span class="delete" onclick="deleteMsg(this)">❌</span>
-      </div>
-    `;
-    saveChat();
+    const aiMsg = { role: "AI", text: "Server error" };
+    saveMsg(aiMsg);
+    addToChat(aiMsg);
   }
+}
+
+/* ADD MESSAGE TO UI */
+function addToChat(msg) {
+  const div = document.createElement("div");
+  div.className = `msg ${msg.role === "You" ? "user" : "ai"}`;
+  div.innerHTML = `
+    <b>${msg.role}:</b> ${msg.text}
+    <span class="delete" onclick="deleteMsg(this)">❌</span>
+  `;
+  chat.appendChild(div);
+}
+
+/* SAVE MESSAGE */
+function saveMsg(msg) {
+  const data = JSON.parse(localStorage.getItem("chatData") || "[]");
+  data.push(msg);
+  localStorage.setItem("chatData", JSON.stringify(data));
+}
+
+/* DELETE ONE MESSAGE */
+function deleteMsg(el) {
+  const msgDiv = el.parentElement;
+  const text = msgDiv.innerText.replace("❌", "").trim();
+
+  let data = JSON.parse(localStorage.getItem("chatData") || "[]");
+  data = data.filter(m => !text.includes(m.text));
+  localStorage.setItem("chatData", JSON.stringify(data));
+
+  msgDiv.remove();
 }
 </script>
 
