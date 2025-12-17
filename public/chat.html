@@ -37,20 +37,16 @@ body { font-family: Arial; background:#f4f6f9; }
 
   <div id="chat"></div>
 
-  <input id="msg" placeholder="Rubuta sakonka..." style="width:70%">
-  <button id="sendBtn">Send</button>
+  <input id="msg" placeholder="Rubuta sakonka..." style="width:75%">
+  <button onclick="sendMsg()">Send</button>
 </div>
 
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("msg");
-const sendBtn = document.getElementById("sendBtn");
 
-/* LOAD OLD CHAT */
+/* LOAD CHAT */
 chat.innerHTML = localStorage.getItem("chatHistory") || "";
-
-/* CLICK EVENT */
-sendBtn.addEventListener("click", sendMsg);
 
 async function sendMsg() {
   const text = input.value.trim();
@@ -67,9 +63,9 @@ async function sendMsg() {
 
   try {
     const res = await fetch("/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text })
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({ message: text })
     });
 
     const data = await res.json();
@@ -84,10 +80,7 @@ async function sendMsg() {
 
   } catch {
     chat.innerHTML += `<div class="ai"><b>AI:</b> Server error</div>`;
-    saveChat();
   }
-
-  chat.scrollTop = chat.scrollHeight;
 }
 
 function saveChat() {
