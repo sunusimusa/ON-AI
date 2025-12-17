@@ -1,1 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Tele Tech AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
 
+<h2>Tele Tech AI (Text)</h2>
+
+<div id="chat"></div><br>
+
+<textarea id="msg" placeholder="Type message..."></textarea><br>
+<button onclick="sendMsg()">Send</button>
+
+<script>
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+if (!user.username) location.href = "login.html";
+
+async function sendMsg() {
+  const message = msg.value.trim();
+  if (!message) return;
+
+  chat.innerHTML += `<p><b>You:</b> ${message}</p>`;
+  msg.value = "";
+
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message })
+  });
+
+  const data = await res.json();
+  chat.innerHTML += `<p><b>AI:</b> ${data.reply || "Error"}</p>`;
+}
+</script>
+
+</body>
+</html>
