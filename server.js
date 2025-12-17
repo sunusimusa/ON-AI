@@ -5,7 +5,6 @@ const OpenAI = require("openai");
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
@@ -13,38 +12,35 @@ const openai = new OpenAI({
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// Home
+// pages
 app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "login.html"));
+});
+
+app.get("/chat", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// Chat API
-app.post("/chat", async (req, res) => {
+// AI CHAT API
+app.post("/api/chat", async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.json({ success:false });
+
   try {
-    const { message } = req.body;
-
-    if (!message) {
-      return res.json({ reply: "Message is empty" });
-    }
-
-    const completion = await openai.chat.completions.create({
+    const r = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a helpful assistant." },
-        { role: "user", content: message }
-      ]
+      messages: [{ role:"user", content: message }]
     });
 
     res.json({
-      reply: completion.choices[0].message.content
+      success: true,
+      reply: r.choices[0].message.content
     });
-
-  } catch (err) {
-    console.error(err);
-    res.json({ reply: "AI error, try again later" });
+  } catch (e) {
+    res.json({ success:false, reply:"AI error" });
   }
 });
 
 app.listen(PORT, () => {
-  console.log("✅ Tele Tech AI Text Bot running on port " + PORT);
+  console.log("Server running on", PORT);
 });
