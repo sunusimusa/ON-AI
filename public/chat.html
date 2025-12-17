@@ -46,7 +46,23 @@ body {
   <input id="msg" placeholder="Rubuta sakonka..." style="width:75%">
   <button id="sendBtn">Send</button>
 </div>
+<script>
+/* ===== PLAN & LIMIT ===== */
+const FREE_LIMIT = 10; // free messages per day
 
+// Karanta user
+const user = JSON.parse(localStorage.getItem("user") || "{}");
+const plan = user.plan || "free";
+
+// Karanta usage
+let usage = JSON.parse(localStorage.getItem("usage") || "{}");
+const today = new Date().toDateString();
+
+// Reset idan sabuwar rana
+if (usage.date !== today) {
+  usage = { count: 0, date: today };
+  localStorage.setItem("usage", JSON.stringify(usage));
+}
 <script>
 const chat = document.getElementById("chat");
 const input = document.getElementById("msg");
@@ -59,7 +75,11 @@ saved.forEach(addToChat);
 /* SEND BUTTON */
 sendBtn.onclick = sendMsg;
 
-async function sendMsg() {
+async function sendMsg(// 🚫 FREE LIMIT CHECK
+if (plan === "free" && usage.count >= FREE_LIMIT) {
+  alert("Free limit reached (10 messages/day). Upgrade to Pro 🚀");
+  return;
+  }) {
   const text = input.value.trim();
   if (!text) return;
 
