@@ -115,14 +115,16 @@
     <button onclick="sendMsg()">Send</button>
   </div>
 </div>
-let usage = parseInt(localStorage.getItem("usage") || "0");
-const FREE_LIMIT = 5;
 
-// duba plan
-const user = JSON.parse(localStorage.getItem("user") || "{}");
-const plan = user.plan || "free";
-  
 <script>
+  /* ===== USER + PLAN ===== */
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const plan = user.plan || "free";
+
+  /* ===== FREE LIMIT ===== */
+  const FREE_LIMIT = 5;
+  let usage = parseInt(localStorage.getItem("usage") || "0");
+
   function deleteMsg(el) {
     el.parentElement.remove();
   }
@@ -134,7 +136,13 @@ const plan = user.plan || "free";
 
     if (!message) return;
 
-    // USER MESSAGE
+    // 🔒 FREE LIMIT CHECK
+    if (plan === "free" && usage >= FREE_LIMIT) {
+      alert("Free limit ya cika ❌ Ka upgrade zuwa Pro 🚀");
+      return;
+    }
+
+    // 🧍 USER MESSAGE
     const userDiv = document.createElement("div");
     userDiv.className = "msg user";
     userDiv.innerHTML = `
@@ -146,7 +154,7 @@ const plan = user.plan || "free";
     input.value = "";
     chat.scrollTop = chat.scrollHeight;
 
-    // THINKING MESSAGE
+    // 🤖 AI THINKING
     const aiDiv = document.createElement("div");
     aiDiv.className = "msg ai";
     aiDiv.innerHTML = `
@@ -167,6 +175,12 @@ const plan = user.plan || "free";
       aiDiv.querySelector(".bubble").innerText =
         data.success ? data.reply : "Error ❌";
 
+      // 📊 UPDATE USAGE (FREE)
+      if (plan === "free") {
+        usage++;
+        localStorage.setItem("usage", usage);
+      }
+
     } catch (err) {
       aiDiv.querySelector(".bubble").innerText = "Server error ❌";
     }
@@ -174,9 +188,6 @@ const plan = user.plan || "free";
     chat.scrollTop = chat.scrollHeight;
   }
 </script>
-if (plan === "free" && usage >= FREE_LIMIT) {
-  alert("Free limit ya cika. Ka upgrade zuwa Pro 🚀");
-  return;
-}
+
 </body>
 </html>
