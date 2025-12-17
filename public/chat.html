@@ -76,8 +76,6 @@ saved.forEach(addToChat);
 sendBtn.onclick = sendMsg;
 
   async function sendMsg() {
-  ...
-  }
 
   // 🚫 FREE LIMIT CHECK (A FARKO)
   if (plan === "free" && usage.count >= FREE_LIMIT) {
@@ -87,7 +85,8 @@ sendBtn.onclick = sendMsg;
 
   const text = input.value.trim();
   if (!text) return;
-
+  }  
+    
   const userMsg = { role: "You", text };
   saveMsg(userMsg);
   addToChat(userMsg);
