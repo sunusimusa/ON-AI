@@ -1,34 +1,30 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>Register</title>
-</head>
 <body>
-
 <h2>Register</h2>
 
-<input id="email" placeholder="Email"><br><br>
-<input id="password" type="password" placeholder="Password"><br><br>
+<input id="u" placeholder="Username"><br><br>
+<input id="p" type="password" placeholder="Password"><br><br>
+<button onclick="reg()">Register</button>
 
-<button onclick="register()">Register</button>
-<p id="msg"></p>
+<p id="m"></p>
+<a href="/login.html">Login</a>
 
 <script>
-async function register() {
-  const res = await fetch("/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email: email.value,
-      password: password.value
-    })
+async function reg() {
+  const u = document.getElementById("u").value;
+  const p = document.getElementById("p").value;
+
+  const r = await fetch("/register", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ username:u, password:p })
   });
 
-  const data = await res.json();
-  msg.innerText = data.success ? "Registered. Go to login." : data.message;
+  const d = await r.json();
+  document.getElementById("m").innerText =
+    d.success ? "Registered!" : "Error";
 }
 </script>
-
 </body>
 </html>
