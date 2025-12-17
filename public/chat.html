@@ -47,12 +47,12 @@ body {
   <button id="sendBtn">Send</button>
 </div>
   
-/* ===== PLAN & LIMIT ===== */
-const FREE_LIMIT = 10; // free messages per day
-
-// Karanta user
+<script>
+//PLAN & LIMIT
+const FREE_LIMIT = 10;
 const user = 
-JSON.parse(localStorage.getItem("user") || "{}");
+JSON.parse(localStorage.getItem("user")
+|| "{}");
 const plan = user.plan || "free";
 
 // Karanta usage
