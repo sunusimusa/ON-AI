@@ -1,29 +1,36 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Tele Tech AI Chat</title>
+</head>
 <body>
 
-<h2>Tele Tech AI (Text)</h2>
+<h2>Tele Tech AI</h2>
 
 <div id="chat"></div>
 
-<textarea id="msg"></textarea><br>
+<input id="msg" placeholder="Type message">
 <button onclick="send()">Send</button>
 
 <script>
-async function send() {
-  const m = document.getElementById("msg").value;
-  document.getElementById("chat").innerHTML += "<p>You: "+m+"</p>";
-  document.getElementById("msg").value = "";
+if (!localStorage.getItem("user")) {
+  window.location.href = "/login.html";
+}
 
-  const r = await fetch("/chat", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ message:m })
+async function send() {
+  const msg = document.getElementById("msg").value;
+  const chat = document.getElementById("chat");
+
+  chat.innerHTML += "<p><b>You:</b> " + msg + "</p>";
+
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: msg })
   });
 
-  const d = await r.json();
-  document.getElementById("chat").innerHTML +=
-    "<p>AI: "+(d.reply || "Error")+"</p>";
+  const data = await res.json();
+  chat.innerHTML += "<p><b>AI:</b> " + data.reply + "</p>";
 }
 </script>
 
