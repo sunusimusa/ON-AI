@@ -41,42 +41,46 @@
 
 </div>
 <script>
-function addMessage(sender, text) {
-  const chat = document.getElementById("chat");
-
-  const msgDiv = document.createElement("div");
-  msgDiv.style.marginBottom = "8px";
-  msgDiv.style.padding = "8px";
-  msgDiv.style.borderRadius = "6px";
-  msgDiv.style.background =
-    sender === "You" ? "#d1e7ff" : "#f1f1f1";
-
-  msgDiv.innerHTML = `
-    <b>${sender}:</b> ${text}
-    <span
-      style="float:right;cursor:pointer;color:red;font-weight:bold;"
-      onclick="this.parentElement.remove()"
-    >❌</span>
-  `;
-
-  chat.appendChild(msgDiv);
-  chat.scrollTop = chat.scrollHeight;
-}
+let msgId = 0;
 
 async function sendMsg() {
   const input = document.getElementById("msg");
+  const chat = document.getElementById("chat");
   const message = input.value.trim();
+
   if (!message) return;
 
-  // 👤 User message
-  addMessage("You", message);
+  msgId++;
+  const userMsgId = "user-" + msgId;
+
+  // 🧍‍♂️ User message + delete
+  chat.innerHTML += `
+    <div id="${userMsgId}" style="margin-bottom:10px;">
+      <b>You:</b> ${message}
+      <button onclick="deleteMsg('${userMsgId}')" 
+        style="margin-left:6px;color:red;border:none;background:none;">
+        ❌
+      </button>
+    </div>
+  `;
+
   input.value = "";
+  chat.scrollTop = chat.scrollHeight;
 
   // 🤖 AI thinking
-  const thinkingId = document.createElement("div");
-  thinkingId.style.color = "gray";
-  thinkingId.innerText = "AI: Thinking...";
-  document.getElementById("chat").appendChild(thinkingId);
+  msgId++;
+  const aiMsgId = "ai-" + msgId;
+
+  chat.innerHTML += `
+    <div id="${aiMsgId}" style="margin-bottom:10px;color:gray;">
+      <b>AI:</b> Thinking...
+      <button onclick="deleteMsg('${aiMsgId}')" 
+        style="margin-left:6px;color:red;border:none;background:none;">
+        ❌
+      </button>
+    </div>
+  `;
+  chat.scrollTop = chat.scrollHeight;
 
   try {
     const res = await fetch("/chat", {
@@ -86,14 +90,31 @@ async function sendMsg() {
     });
 
     const data = await res.json();
-    thinkingId.remove();
 
-    addMessage("AI", data.success ? data.reply : "Error");
-
-  } catch (e) {
-    thinkingId.remove();
-    addMessage("AI", "Server error ❌");
+    document.getElementById(aiMsgId).innerHTML = `
+      <b>AI:</b> ${data.success ? data.reply : "Error"}
+      <button onclick="deleteMsg('${aiMsgId}')" 
+        style="margin-left:6px;color:red;border:none;background:none;">
+        ❌
+      </button>
+    `;
+  } catch {
+    document.getElementById(aiMsgId).innerHTML = `
+      <b>AI:</b> Server error ❌
+      <button onclick="deleteMsg('${aiMsgId}')" 
+        style="margin-left:6px;color:red;border:none;background:none;">
+        ❌
+      </button>
+    `;
   }
+
+  chat.scrollTop = chat.scrollHeight;
+}
+
+// 🗑️ DELETE MESSAGE ƊAYA
+function deleteMsg(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
 }
 </script>
 </body>
