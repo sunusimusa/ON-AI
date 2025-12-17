@@ -1,68 +1,63 @@
 const express = require("express");
-const fs = require("fs");
 const path = require("path");
+const fs = require("fs");
 const OpenAI = require("openai");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-// ===== OpenAI =====
+// ===== OPENAI =====
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// ===== Middleware =====
+// ===== MIDDLEWARE =====
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
-// ===== Files =====
-const USERS_FILE = path.join(__dirname, "data", "users.json");
+// ===== FILE =====
+const usersFile = path.join(__dirname, "data", "users.json");
 
-// ===== Helpers =====
-function readUsers() {
-  if (!fs.existsSync(USERS_FILE)) return [];
-  return JSON.parse(fs.readFileSync(USERS_FILE, "utf8"));
-}
-
-function saveUsers(users) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-}
-
-// ===== ROUTES =====
+// ===== ROUTES (PAGES) =====
 app.get("/", (req, res) => {
   res.redirect("/login.html");
 });
 
 // ===== REGISTER =====
 app.post("/register", (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
+  const { username, password } = req.body;
+
+  if (!username || !password) {
     return res.json({ success: false, message: "All fields required" });
   }
 
-  const users = readUsers();
-  if (users.find(u => u.email === email)) {
+  let users = [];
+  if (fs.existsSync(usersFile)) {
+    users = JSON.parse(fs.readFileSync(usersFile, "utf8"));
+  }
+
+  if (users.find(u => u.username === username)) {
     return res.json({ success: false, message: "User already exists" });
   }
 
-  users.push({
-    email,
-    password,
-    plan: "free"
-  });
+  users.push({ username, password, plan: "free" });
+  fs.writeFileSync(usersFile, JSON.stringify(users, null, 2));
 
-  saveUsers(users);
   res.json({ success: true });
 });
 
 // ===== LOGIN =====
 app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-  const users = readUsers();
+  const { username, password } = req.body;
+
+  let users = [];
+  if (fs.existsSync(usersFile)) {
+    users = JSON.parse(fs.readFileSync(usersFile, "utf8"));
+  }
 
   const user = users.find(
-    u => u.email === email && u.password === password
+    u => u.username === username && u.password === password
   );
 
   if (!user) {
@@ -71,10 +66,8 @@ app.post("/login", (req, res) => {
 
   res.json({
     success: true,
-    user: {
-      email: user.email,
-      plan: user.plan
-    }
+    username: user.username,
+    plan: user.plan
   });
 });
 
@@ -82,29 +75,27 @@ app.post("/login", (req, res) => {
 app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
+
     if (!message) {
-      return res.json({ success: false, reply: "Empty message" });
+      return res.json({ success: false });
     }
 
-    const completion = await openai.chat.completions.create({
+    const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are a helpful AI assistant." },
+        { role: "system", content: "You are a helpful assistant." },
         { role: "user", content: message }
       ]
     });
 
     res.json({
       success: true,
-      reply: completion.choices[0].message.content
+      reply: response.choices[0].message.content
     });
 
   } catch (err) {
     console.error(err);
-    res.json({
-      success: false,
-      reply: "AI error"
-    });
+    res.json({ success: false });
   }
 });
 
