@@ -1,34 +1,39 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Login</title>
+</head>
 <body>
+
 <h2>Login</h2>
 
-<input id="u" placeholder="Username"><br><br>
-<input id="p" type="password" placeholder="Password"><br><br>
-<button onclick="login()">Login</button>
+<input id="username" placeholder="Username"><br><br>
+<input id="password" type="password" placeholder="Password"><br><br>
 
-<p id="m"></p>
-<a href="/register.html">Register</a>
+<button onclick="login()">Login</button>
+<p id="msg"></p>
 
 <script>
 async function login() {
-  const u = document.getElementById("u").value;
-  const p = document.getElementById("p").value;
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
 
-  const r = await fetch("/login", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ username:u, password:p })
+  const res = await fetch("/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password })
   });
 
-  const d = await r.json();
-  if (d.success) {
-    localStorage.setItem("user", JSON.stringify(d));
-    location.href = "/chat.html";
+  const data = await res.json();
+
+  if (data.success) {
+    localStorage.setItem("user", data.username);
+    window.location.href = "/chat.html";
   } else {
-    document.getElementById("m").innerText = "Login failed";
+    document.getElementById("msg").innerText = data.message;
   }
 }
 </script>
+
 </body>
 </html>
