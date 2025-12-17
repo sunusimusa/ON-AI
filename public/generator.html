@@ -54,11 +54,10 @@
     }
 
     .bubble {
-      padding: 8px 12px;
-      border-radius: 14px;
+      padding: 6px 10px;
+      border-radius: 12px;
       max-width: 80%;
       word-wrap: break-word;
-      font-size: 14px;
     }
 
     .user .bubble {
@@ -75,7 +74,6 @@
       cursor: pointer;
       color: red;
       font-size: 14px;
-      user-select: none;
     }
 
     .input-box {
@@ -108,8 +106,10 @@
 <div class="container">
   <h2>Tele Tech AI (Text)</h2>
 
+  <!-- CHAT -->
   <div id="chat"></div>
 
+  <!-- INPUT -->
   <div class="input-box">
     <textarea id="msg" placeholder="Rubuta sakonka a nan..."></textarea>
     <button onclick="sendMsg()">Send</button>
@@ -137,7 +137,6 @@
     const input = document.getElementById("msg");
     const chat = document.getElementById("chat");
     const message = input.value.trim();
-
     if (!message) return;
 
     // USER MESSAGE
