@@ -38,32 +38,42 @@
       background: #fafafa;
     }
 
-    .user {
+    .msg {
       margin-bottom: 8px;
-      text-align: right;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .user span {
-      background: #007bff;
-      color: white;
-      padding: 6px 10px;
-      border-radius: 12px;
-      display: inline-block;
-      max-width: 80%;
+    .user {
+      justify-content: flex-end;
     }
 
     .ai {
-      margin-bottom: 8px;
-      text-align: left;
+      justify-content: flex-start;
     }
 
-    .ai span {
-      background: #e9e9e9;
-      color: #000;
+    .bubble {
       padding: 6px 10px;
       border-radius: 12px;
-      display: inline-block;
       max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .user .bubble {
+      background: #007bff;
+      color: white;
+    }
+
+    .ai .bubble {
+      background: #e9e9e9;
+      color: #000;
+    }
+
+    .delete {
+      cursor: pointer;
+      color: red;
+      font-size: 14px;
     }
 
     .input-box {
@@ -96,7 +106,7 @@
 <div class="container">
   <h2>Tele Tech AI (Text)</h2>
 
-  <!-- CHAT HISTORY -->
+  <!-- CHAT -->
   <div id="chat"></div>
 
   <!-- INPUT -->
@@ -107,6 +117,10 @@
 </div>
 
 <script>
+  function deleteMsg(el) {
+    el.parentElement.remove();
+  }
+
   async function sendMsg() {
     const input = document.getElementById("msg");
     const chat = document.getElementById("chat");
@@ -114,23 +128,26 @@
 
     if (!message) return;
 
-    // 🧍‍♂️ USER MESSAGE
-    chat.innerHTML += `
-      <div class="user">
-        <span>${message}</span>
-      </div>
+    // USER MESSAGE
+    const userDiv = document.createElement("div");
+    userDiv.className = "msg user";
+    userDiv.innerHTML = `
+      <span class="delete" onclick="deleteMsg(this)">❌</span>
+      <div class="bubble">${message}</div>
     `;
+    chat.appendChild(userDiv);
 
     input.value = "";
     chat.scrollTop = chat.scrollHeight;
 
-    // 🤖 THINKING MESSAGE
-    const thinkingId = "thinking-" + Date.now();
-    chat.innerHTML += `
-      <div class="ai" id="${thinkingId}">
-        <span>Thinking...</span>
-      </div>
+    // THINKING MESSAGE
+    const aiDiv = document.createElement("div");
+    aiDiv.className = "msg ai";
+    aiDiv.innerHTML = `
+      <div class="bubble">Thinking...</div>
+      <span class="delete" onclick="deleteMsg(this)">❌</span>
     `;
+    chat.appendChild(aiDiv);
     chat.scrollTop = chat.scrollHeight;
 
     try {
@@ -141,17 +158,14 @@
       });
 
       const data = await res.json();
-
-      document.getElementById(thinkingId).innerHTML = `
-        <span>${data.success ? data.reply : "Error ❌"}</span>
-      `;
-
-      chat.scrollTop = chat.scrollHeight;
+      aiDiv.querySelector(".bubble").innerText =
+        data.success ? data.reply : "Error ❌";
 
     } catch (err) {
-      document.getElementById(thinkingId).innerHTML =
-        "<span>Server error ❌</span>";
+      aiDiv.querySelector(".bubble").innerText = "Server error ❌";
     }
+
+    chat.scrollTop = chat.scrollHeight;
   }
 </script>
 
