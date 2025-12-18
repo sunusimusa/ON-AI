@@ -16,57 +16,40 @@ const openai = new OpenAI({
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// ================= CHAT API =================
+// ===== CHAT API =====
 app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
 
     if (!message || message.trim() === "") {
-      return res.json({
-        success: false,
-        reply: "No message received"
-      });
+      return res.json({ reply: "No message received" });
     }
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        {
-          role: "system",
-          content: "You are a helpful Hausa assistant. Reply clearly."
-        },
-        {
-          role: "user",
-          content: message
-        }
+        { role: "system", content: "You are a helpful Hausa assistant." },
+        { role: "user", content: message }
       ]
     });
 
-    const reply = completion.choices[0].message.content;
-
     res.json({
-      success: true,
-      reply
+      reply: completion.choices[0].message.content
     });
 
-  } catch (error) {
-    console.error("CHAT ERROR:", error);
-    res.json({
-      success: false,
-      reply: "AI error, please try again later"
-    });
+  } catch (err) {
+    console.error("CHAT ERROR:", err);
+    res.json({ reply: "AI error" });
   }
 });
 
-// ================= PAYMENT API (FLUTTERWAVE) =================
+// ===== FLUTTERWAVE PAYMENT API =====
 app.post("/pay", async (req, res) => {
   try {
     const { email, amount } = req.body;
 
     if (!email || !amount) {
-      return res.status(400).json({
-        error: "Missing email or amount"
-      });
+      return res.json({ error: "Missing payment data" });
     }
 
     const response = await axios.post(
@@ -92,15 +75,11 @@ app.post("/pay", async (req, res) => {
       }
     );
 
-    return res.json({
-      link: response.data.data.link
-    });
+    res.json({ link: response.data.data.link });
 
   } catch (err) {
     console.error("PAY ERROR:", err.response?.data || err.message);
-    return res.status(500).json({
-      error: "Payment initialization failed"
-    });
+    res.status(500).json({ error: "Payment initialization failed" });
   }
 });
 
