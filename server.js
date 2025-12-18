@@ -56,7 +56,43 @@ app.post("/chat", async (req, res) => {
     });
   }
 });
+const axios = require("axios");
 
+/* ===== FLUTTERWAVE PAYMENT ===== */
+app.post("/pay", async (req, res) => {
+  try {
+    const { email, amount } = req.body;
+
+    const response = await axios.post(
+      "https://api.flutterwave.com/v3/payments",
+      {
+        tx_ref: "teletech_" + Date.now(),
+        amount: amount,
+        currency: "NGN",
+        redirect_url: "https://tele-tech-ai.onrender.com/success.html",
+        customer: {
+          email: email
+        },
+        customizations: {
+          title: "Tele Tech AI Pro",
+          description: "Upgrade to Pro Plan"
+        }
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    res.json({ link: response.data.data.link });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Payment error" });
+  }
+});
 // ===== START SERVER =====
 app.listen(PORT, () => {
   console.log("✅ Server running on port " + PORT);
