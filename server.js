@@ -26,7 +26,49 @@ app.post("/chat", async (req, res) => {
         reply: "No message received"
       });
     }
+// ===== PAYMENT API =====
+app.post("/pay", async (req, res) => {
+  try {
+    const { email, amount } = req.body;
 
+    if (!email || !amount) {
+      return res.json({ error: "Missing payment data" });
+    }
+
+    const response = await fetch("https://api.flutterwave.com/v3/payments", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        tx_ref: "tele-tech-" + Date.now(),
+        amount: amount,
+        currency: "NGN",
+        redirect_url: "https://tele-tech-ai.onrender.com/success.html",
+        customer: {
+          email: email
+        },
+        customizations: {
+          title: "Tele Tech AI Pro",
+          description: "Pro subscription payment"
+        }
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.status === "success") {
+      res.json({ link: data.data.link });
+    } else {
+      res.json({ error: "Flutterwave error", data });
+    }
+
+  } catch (err) {
+    console.error("PAY ERROR:", err);
+    res.json({ error: "Payment initialization failed" });
+  }
+});
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
