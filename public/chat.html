@@ -182,7 +182,41 @@ upgradeBtn.addEventListener("click", async () => {
         amount: 1000
       })
     });
+app.post("/chat", async (req, res) => {
+  try {
+    const { message, email } = req.body;
 
+    if (!message) {
+      return res.json({ reply: "No message received" });
+    }
+
+    const users = getUsers();
+    const user = users.find(u => u.email === email);
+
+    if (!user || user.plan !== "pro") {
+      return res.json({
+        reply: "❌ Wannan feature na PRO ne. Don Allah ka upgrade."
+      });
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: message }
+      ]
+    });
+
+    res.json({
+      reply: completion.choices[0].message.content
+    });
+
+  } catch (err) {
+    console.error("CHAT ERROR:", err);
+    res.json({ reply: "AI error" });
+  }
+});
+    
     const data = await res.json();
 
     if (data.link) {
