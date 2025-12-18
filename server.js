@@ -1,8 +1,8 @@
 // ===== IMPORTS =====
 const express = require("express");
 const path = require("path");
-const OpenAI = require("openai");
 const axios = require("axios");
+const OpenAI = require("openai");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
@@ -28,7 +28,7 @@ app.post("/chat", async (req, res) => {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are a helpful Hausa assistant." },
+        { role: "system", content: "You are a helpful assistant." },
         { role: "user", content: message }
       ]
     });
@@ -43,26 +43,26 @@ app.post("/chat", async (req, res) => {
   }
 });
 
-// ===== FLUTTERWAVE PAYMENT API =====
+// ===== PAYMENT API (FLUTTERWAVE) =====
 app.post("/pay", async (req, res) => {
   try {
     const { email, amount } = req.body;
 
     if (!email || !amount) {
-      return res.status(400).json({ error: "Missing email or amount" });
+      return res.json({ error: "Missing payment data" });
     }
 
     const response = await axios.post(
       "https://api.flutterwave.com/v3/payments",
       {
-        tx_ref: "tele-tech-" + Date.now(),
+        tx_ref: "teletech_" + Date.now(),
         amount: amount,
         currency: "NGN",
         redirect_url: "https://tele-tech-ai.onrender.com/success.html",
         customer: { email },
         customizations: {
           title: "Tele Tech AI Pro",
-          description: "Pro subscription payment"
+          description: "Upgrade to Pro Plan"
         }
       },
       {
@@ -73,7 +73,7 @@ app.post("/pay", async (req, res) => {
       }
     );
 
-    return res.json({ link: response.data.data.link });
+    res.json({ link: response.data.data.link });
 
   } catch (err) {
     console.error("PAY ERROR:", err.response?.data || err.message);
