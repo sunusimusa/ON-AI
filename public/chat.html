@@ -140,7 +140,21 @@ function deleteMsg(el) {
   data = data.filter(m => m.text !== div.innerText);
   localStorage.setItem("chatData", JSON.stringify(data));
 }
+<script>
+/* ===== UPGRADE BUTTON ===== */
+const upgradeBtn = document.getElementById("upgradeBtn");
+
+upgradeBtn.addEventListener("click", () => {
+  alert(
+    "Upgrade to Pro 🚀\n\n" +
+    "Pro plan yana nan tafe.\n" +
+    "Domin upgrade, tuntubi admin."
+  );
+});
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
