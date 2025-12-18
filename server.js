@@ -115,13 +115,16 @@ app.post("/webhook", express.json(), (req, res) => {
 
   const event = req.body;
 
-  // idan payment ya yi nasara
-  if (event.event === "charge.completed" && event.data.status === "successful") {
+  if (
+    event.event === "charge.completed" &&
+    event.data.status === "successful"
+  ) {
     const email = event.data.customer.email;
 
     console.log("✅ Payment successful for:", email);
 
-    // 👉 anan ne zaka sa USER ya koma PRO (a gaba)
+    // 🔥 AUTO UPGRADE
+    upgradeUserToPro(email);
   }
 
   res.status(200).send("OK");
