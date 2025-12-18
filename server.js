@@ -49,7 +49,7 @@ app.post("/pay", async (req, res) => {
     const { email, amount } = req.body;
 
     if (!email || !amount) {
-      return res.json({ error: "Missing payment data" });
+      return res.status(400).json({ error: "Missing email or amount" });
     }
 
     const response = await axios.post(
@@ -59,12 +59,10 @@ app.post("/pay", async (req, res) => {
         amount: amount,
         currency: "NGN",
         redirect_url: "https://tele-tech-ai.onrender.com/success.html",
-        customer: {
-          email: email
-        },
+        customer: { email },
         customizations: {
           title: "Tele Tech AI Pro",
-          description: "Upgrade to Pro Plan"
+          description: "Pro subscription payment"
         }
       },
       {
@@ -75,7 +73,7 @@ app.post("/pay", async (req, res) => {
       }
     );
 
-    res.json({ link: response.data.data.link });
+    return res.json({ link: response.data.data.link });
 
   } catch (err) {
     console.error("PAY ERROR:", err.response?.data || err.message);
