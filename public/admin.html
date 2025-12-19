@@ -1,67 +1,91 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Dashboard</title>
+<meta charset="UTF-8">
+<title>Admin Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body { font-family: Arial; background:#f4f6f9; }
+.box { max-width:600px; margin:30px auto; background:#fff; padding:15px; border-radius:8px; }
+input, button { padding:8px; margin:5px 0; width:100%; }
+.user { border-bottom:1px solid #ddd; padding:6px 0; }
+.pro { color:green; font-weight:bold; }
+.free { color:red; }
+</style>
 </head>
+
 <body>
-<h2>Admin Dashboard</h2>
+<div class="box">
+  <h2>Admin Dashboard</h2>
 
-<input id="password" placeholder="Admin password">
-<button onclick="login()">Login</button>
+  <input id="adminPass" type="password" placeholder="Admin password">
+  <button onclick="login()">Login</button>
 
-<hr>
+  <hr>
 
-<button onclick="loadUsers()">Load Users</button>
-<ul id="users"></ul>
+  <button onclick="loadUsers()">Load Users</button>
+  <div id="users"></div>
+</div>
 
 <script>
-let loggedIn = false;
+let token = "";
 
-async function login() {
-  const password = document.getElementById("password").value;
+function login() {
+  const pass = document.getElementById("adminPass").value;
+  if (!pass) return alert("Enter admin password");
 
-  const res = await fetch("/admin/login", {
+  fetch("/admin/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password })
-  });
-
-  if (res.ok) {
-    alert("Admin logged in");
-    loggedIn = true;
-  } else {
-    alert("Wrong password");
-  }
-}
-
-async function loadUsers() {
-  if (!loggedIn) return alert("Login first");
-
-  const res = await fetch("/admin/users");
-  const users = await res.json();
-
-  const ul = document.getElementById("users");
-  ul.innerHTML = "";
-
-  users.forEach(u => {
-    const li = document.createElement("li");
-    li.innerHTML = `
-      ${u.email} - <b>${u.plan}</b>
-      <button onclick="upgrade('${u.email}')">Make PRO</button>
-    `;
-    ul.appendChild(li);
+    body: JSON.stringify({ password: pass })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.token) {
+      token = d.token;
+      alert("Admin logged in ✅");
+    } else {
+      alert("Wrong password ❌");
+    }
   });
 }
 
-async function upgrade(email) {
-  await fetch("/admin/upgrade", {
+function loadUsers() {
+  fetch("/admin/users", {
+    headers: { "Authorization": token }
+  })
+  .then(r => r.json())
+  .then(users => {
+    const div = document.getElementById("users");
+    div.innerHTML = "";
+
+    users.forEach(u => {
+      div.innerHTML += `
+        <div class="user">
+          ${u.email} —
+          <span class="${u.plan === "pro" ? "pro" : "free"}">
+            ${u.plan.toUpperCase()}
+          </span>
+          <button onclick="togglePlan('${u.email}')">
+            Toggle Plan
+          </button>
+        </div>
+      `;
+    });
+  });
+}
+
+function togglePlan(email) {
+  fetch("/admin/toggle", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": token
+    },
     body: JSON.stringify({ email })
-  });
-
-  alert("Upgraded");
-  loadUsers();
+  })
+  .then(() => loadUsers());
 }
 </script>
 </body>
