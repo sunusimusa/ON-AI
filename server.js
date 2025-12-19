@@ -127,7 +127,7 @@ app.get("/admin/users", (req, res) => {
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 let ADMIN_TOKEN = null;
 /* ===== ADMIN AUTH ===== */
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+const ADMIN_PASSWORD =
 
 /* ===== ADMIN LOGIN ===== */
 app.post("/admin/login", (req, res) => {
