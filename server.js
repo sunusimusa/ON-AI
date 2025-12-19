@@ -28,13 +28,18 @@ function saveUsers(users) {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
+/* ===== HOME ===== */
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 /* ===== CHAT API ===== */
 app.post("/chat", async (req, res) => {
   try {
     const { message, email } = req.body;
 
     if (!message || !email) {
-      return res.json({ reply: "Missing message or email" });
+      return res.json({ reply: "❌ Missing message or email" });
     }
 
     const users = getUsers();
@@ -54,7 +59,9 @@ app.post("/chat", async (req, res) => {
       ]
     });
 
-    res.json({ reply: completion.choices[0].message.content });
+    res.json({
+      reply: completion.choices[0].message.content
+    });
 
   } catch (err) {
     console.error("CHAT ERROR:", err);
@@ -66,6 +73,10 @@ app.post("/chat", async (req, res) => {
 app.post("/pay", async (req, res) => {
   try {
     const { email, amount } = req.body;
+
+    if (!email || !amount) {
+      return res.status(400).json({ error: "Missing payment data" });
+    }
 
     const response = await axios.post(
       "https://api.flutterwave.com/v3/payments",
@@ -97,13 +108,11 @@ app.post("/pay", async (req, res) => {
 });
 
 /* ===== FLUTTERWAVE WEBHOOK ===== */
-app.post("/webhook", express.json(), (req, res) => {
+app.post("/webhook", (req, res) => {
   const secretHash = process.env.FLW_WEBHOOK_SECRET;
   const signature = req.headers["verif-hash"];
 
   console.log("📩 WEBHOOK RECEIVED");
-  console.log("Signature:", signature);
-  console.log("Body:", req.body);
 
   if (!signature || signature !== secretHash) {
     console.log("❌ Invalid webhook signature");
@@ -128,15 +137,12 @@ app.post("/webhook", express.json(), (req, res) => {
     }
 
     saveUsers(users);
-
     console.log("✅ USER UPGRADED TO PRO:", email);
   }
 
   res.status(200).send("OK");
 });
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+
 /* ===== START SERVER ===== */
 app.listen(PORT, () => {
   console.log("✅ Server running on port", PORT);
