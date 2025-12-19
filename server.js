@@ -207,6 +207,18 @@ app.post("/admin/users", (req, res) => {
 
   res.json(getUsers());
 });
+async function loadUsers() {
+  const password = localStorage.getItem("adminPassword");
+
+  const res = await fetch("/admin/users", {
+    headers: {
+      "x-admin-password": password
+    }
+  });
+
+  const users = await res.json();
+  console.log(users);
+}
 
 /* ===== START ===== */
 app.listen(PORT, () => {
