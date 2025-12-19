@@ -8,6 +8,8 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const ADMIN_PASSWORD = 
 process.env.ADMIN_PASSWORD;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "1234";
+let ADMIN_TOKEN = null;
 
 /* ===== OPENAI ===== */
 const openai = new OpenAI({
