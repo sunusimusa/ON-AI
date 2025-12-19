@@ -4,7 +4,18 @@ const path = require("path");
 const fs = require("fs");
 const axios = require("axios");
 const OpenAI = require("openai");
+const fs = require("fs");
 
+const USERS_FILE = path.join(__dirname, "data", "users.json");
+
+function getUsers() {
+  if (!fs.existsSync(USERS_FILE)) return [];
+  return JSON.parse(fs.readFileSync(USERS_FILE, "utf8"));
+}
+
+function saveUsers(users) {
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+}
 const app = express();
 const PORT = process.env.PORT || 10000;
 
