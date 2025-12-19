@@ -3,7 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const axios = require("axios");
 const OpenAI = require("openai");
-
+const crypto = require("crypto");
 const app = express();
 const PORT = process.env.PORT || 10000;
 const bcrypt = require("bcryptjs");
