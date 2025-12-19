@@ -30,12 +30,6 @@ body {
 .msg { margin-bottom: 6px; }
 .user { color: #007bff; }
 .ai { color: #000; }
-
-.delete {
-  color: red;
-  cursor: pointer;
-  margin-left: 6px;
-}
 </style>
 </head>
 
@@ -79,7 +73,7 @@ const input = document.getElementById("msg");
 const sendBtn = document.getElementById("sendBtn");
 const upgradeBtn = document.getElementById("upgradeBtn");
 
-/* ===== LOAD CHAT ===== */
+/* ===== LOAD OLD CHAT ===== */
 const saved = JSON.parse(localStorage.getItem("chatData") || "[]");
 saved.forEach(addToChat);
 
