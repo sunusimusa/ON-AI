@@ -84,10 +84,43 @@ async function sendMsg() {
   const text = input.value.trim();
   if (!text) return;
 
-  if (usage.count >= FREE_LIMIT) {
-    alert("❌ Free limit ya cika (10 messages/day)");
+  let isProUser = false;
+
+async function sendMsg() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  let email = localStorage.getItem("email");
+  if (!email) {
+    email = prompt("Shigar da email dinka:");
+    if (!email) return;
+    localStorage.setItem("email", email);
+  }
+
+  if (!isProUser && usage.count >= FREE_LIMIT) {
+    alert("❌ Free limit ya cika (10 messages/day). Ka upgrade.");
     return;
   }
+
+  addAndSave("You", text);
+  input.value = "";
+
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text, email })
+  });
+
+  const data = await res.json();
+  addAndSave("AI", data.reply || "Error");
+
+  if (data.pro) {
+    isProUser = true;
+  } else {
+    usage.count++;
+    localStorage.setItem("usage", JSON.stringify(usage));
+  }
+}
 
   let email = localStorage.getItem("email");
   if (!email) {
