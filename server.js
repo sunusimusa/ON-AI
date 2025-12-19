@@ -20,6 +20,10 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 let ADMIN_TOKEN = "";
 
 /* ================= USERS STORAGE ================= */
+function hashPassword(password) {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
+
 const USERS_FILE = path.join(__dirname, "data", "users.json");
 
 function getUsers() {
