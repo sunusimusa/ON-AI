@@ -42,31 +42,39 @@ img { max-width:100%; margin-top:10px; border-radius:8px; }
     </a>
   </p>
 </div>
-  
 <script>
-/* ===== ELEMENTS ===== */
+/* ================== ELEMENTS ================== */
 const chat = document.getElementById("chat");
-const input = document.getElementById("msg");
+const msgInput = document.getElementById("msg");
 const sendBtn = document.getElementById("sendBtn");
-const upgradeBtn = document.getElementById("upgradeBtn");
+
 const imgBtn = document.getElementById("imgBtn");
 const imagePrompt = document.getElementById("imagePrompt");
 const resultImg = document.getElementById("resultImg");
 
-/* ===== SEND CHAT ===== */
-sendBtn.onclick = async () => {
-  const text = input.value.trim();
-  if (!text) return;
+const upgradeBtn = document.getElementById("upgradeBtn");
 
+/* ================== EMAIL ================== */
+function getEmail() {
   let email = localStorage.getItem("email");
   if (!email) {
     email = prompt("Shigar da email dinka:");
-    if (!email) return;
+    if (!email) return null;
     localStorage.setItem("email", email);
   }
+  return email;
+}
+
+/* ================== CHAT ================== */
+sendBtn.addEventListener("click", async () => {
+  const text = msgInput.value.trim();
+  if (!text) return;
+
+  const email = getEmail();
+  if (!email) return;
 
   chat.innerHTML += `<div><b>You:</b> ${text}</div>`;
-  input.value = "";
+  msgInput.value = "";
 
   try {
     const res = await fetch("/chat", {
@@ -80,22 +88,18 @@ sendBtn.onclick = async () => {
   } catch {
     alert("Chat error");
   }
-};
+});
 
-/* ===== IMAGE GENERATOR (PRO) ===== */
-imgBtn.onclick = async () => {
-  const promptText = imagePrompt.value.trim();
-  if (!promptText) {
+/* ================== IMAGE (PRO) ================== */
+imgBtn.addEventListener("click", async () => {
+  const prompt = imagePrompt.value.trim();
+  if (!prompt) {
     alert("Rubuta abinda kake so a hoto");
     return;
   }
 
-  let email = localStorage.getItem("email");
-  if (!email) {
-    email = prompt("Shigar da email dinka:");
-    if (!email) return;
-    localStorage.setItem("email", email);
-  }
+  const email = getEmail();
+  if (!email) return;
 
   imgBtn.disabled = true;
   imgBtn.innerText = "Generating...";
@@ -104,7 +108,7 @@ imgBtn.onclick = async () => {
     const res = await fetch("/generate-image", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: promptText, email })
+      body: JSON.stringify({ prompt, email })
     });
 
     const data = await res.json();
@@ -121,16 +125,15 @@ imgBtn.onclick = async () => {
 
   imgBtn.disabled = false;
   imgBtn.innerText = "Generate";
-};
+});
 
-/* ===== UPGRADE ===== */
-upgradeBtn.onclick = async () => {
-  let email = localStorage.getItem("email");
-  if (!email) {
-    email = prompt("Enter your email:");
-    if (!email) return;
-    localStorage.setItem("email", email);
-  }
+/* ================== UPGRADE ================== */
+upgradeBtn.addEventListener("click", async () => {
+  const email = getEmail();
+  if (!email) return;
+
+  upgradeBtn.disabled = true;
+  upgradeBtn.innerText = "Redirecting...";
 
   try {
     const res = await fetch("/pay", {
@@ -141,11 +144,15 @@ upgradeBtn.onclick = async () => {
 
     const data = await res.json();
     if (data.link) window.location.href = data.link;
+    else alert("Payment error");
   } catch {
-    alert("Payment error");
+    alert("Network error");
   }
-};
-</script>
-  
+
+  upgradeBtn.disabled = false;
+  upgradeBtn.innerText = "Upgrade to Pro
+  🚀";
+  });
+ </script>
 </body>
 </html>
