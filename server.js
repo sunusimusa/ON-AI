@@ -7,12 +7,16 @@ const OpenAI = require("openai");
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-/* ================== OPENAI ================== */
+/* ================= OPENAI ================= */
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-/* ================== USERS STORAGE ================== */
+/* ================= ADMIN ================= */
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+let ADMIN_TOKEN = "";
+
+/* ================= USERS STORAGE ================= */
 const USERS_FILE = path.join(__dirname, "data", "users.json");
 
 function getUsers() {
@@ -24,16 +28,16 @@ function saveUsers(users) {
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
 
-/* ================== MIDDLEWARE ================== */
+/* ================= MIDDLEWARE ================= */
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-/* ================== HOME ================== */
+/* ================= HOME ================= */
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-/* ================== CHAT ================== */
+/* ================= CHAT ================= */
 app.post("/chat", async (req, res) => {
   try {
     const { message, email } = req.body;
@@ -43,12 +47,7 @@ app.post("/chat", async (req, res) => {
 
     const users = getUsers();
     const user = users.find(u => u.email === email);
-
-    if (!user || user.plan !== "pro") {
-      return res.json({
-        reply: "❌ Wannan feature na PRO ne. Don Allah ka upgrade."
-      });
-    }
+    const isPro = user && user.plan === "pro";
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -58,7 +57,10 @@ app.post("/chat", async (req, res) => {
       ]
     });
 
-    res.json({ reply: completion.choices[0].message.content });
+    res.json({
+      reply: completion.choices[0].message.content,
+      pro: isPro
+    });
 
   } catch (err) {
     console.error("CHAT ERROR:", err);
@@ -66,7 +68,7 @@ app.post("/chat", async (req, res) => {
   }
 });
 
-/* ================== IMAGE (PRO) ================== */
+/* ================= IMAGE (PRO) ================= */
 app.post("/generate-image", async (req, res) => {
   try {
     const { prompt, email } = req.body;
@@ -79,7 +81,7 @@ app.post("/generate-image", async (req, res) => {
 
     if (!user || user.plan !== "pro") {
       return res.json({
-        error: "❌ Wannan feature na PRO ne. Don Allah ka upgrade."
+        error: "❌ Wannan feature na PRO ne"
       });
     }
 
@@ -93,11 +95,11 @@ app.post("/generate-image", async (req, res) => {
 
   } catch (err) {
     console.error("IMAGE ERROR:", err);
-    res.json({ error: "Image generation failed" });
+    res.json({ error: "Image failed" });
   }
 });
 
-/* ================== PAYMENT ================== */
+/* ================= PAYMENT INIT ================= */
 app.post("/pay", async (req, res) => {
   try {
     const { email, amount } = req.body;
@@ -127,55 +129,71 @@ app.post("/pay", async (req, res) => {
 
   } catch (err) {
     console.error("PAY ERROR:", err.message);
-    res.status(500).json({ error: "Payment failed" });
+    res.json({ error: "Payment failed" });
   }
 });
-/* ===== ADMIN AUTH ===== */
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-/* ===== ADMIN LOGIN ===== */
+/* ================= WEBHOOK ================= */
+app.post("/webhook", (req, res) => {
+  const signature = req.headers["verif-hash"];
+  if (signature !== process.env.FLW_WEBHOOK_SECRET) {
+    return res.status(401).send("Invalid signature");
+  }
+
+  const event = req.body;
+
+  if (event.event === "charge.completed" && event.data.status === "successful") {
+    const email = event.data.customer.email;
+    let users = getUsers();
+    let user = users.find(u => u.email === email);
+
+    if (user) user.plan = "pro";
+    else users.push({ email, plan: "pro" });
+
+    saveUsers(users);
+    console.log("✅ PRO USER:", email);
+  }
+
+  res.send("OK");
+});
+
+/* ================= ADMIN LOGIN ================= */
 app.post("/admin/login", (req, res) => {
   const { password } = req.body;
-
-  if (!password || password !== ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Wrong password" });
+  if (password === ADMIN_PASSWORD) {
+    ADMIN_TOKEN = "admin-" + Date.now();
+    return res.json({ token: ADMIN_TOKEN });
   }
-
-  // simple token
-  res.json({ token: "admin" });
+  res.status(401).json({ error: "Wrong password" });
 });
 
-/* ===== GET USERS ===== */
+/* ================= ADMIN USERS ================= */
 app.get("/admin/users", (req, res) => {
-  const auth = req.headers.authorization;
-
-  if (auth !== "admin") {
+  if (req.headers.authorization !== ADMIN_TOKEN) {
     return res.status(401).send("Unauthorized");
   }
-
   res.json(getUsers());
 });
 
-/* ===== TOGGLE USER PLAN ===== */
+/* ================= ADMIN TOGGLE ================= */
 app.post("/admin/toggle", (req, res) => {
-  const auth = req.headers.authorization;
-  if (auth !== "admin") {
+  if (req.headers.authorization !== ADMIN_TOKEN) {
     return res.status(401).send("Unauthorized");
   }
 
   const { email } = req.body;
   let users = getUsers();
+  let user = users.find(u => u.email === email);
 
-  const user = users.find(u => u.email === email);
-  if (!user) return res.status(404).send("User not found");
-
-  user.plan = user.plan === "pro" ? "free" : "pro";
-  saveUsers(users);
+  if (user) {
+    user.plan = user.plan === "pro" ? "free" : "pro";
+    saveUsers(users);
+  }
 
   res.json({ success: true });
 });
 
-/* ================== START ================== */
+/* ================= START ================= */
 app.listen(PORT, () => {
   console.log("✅ Server running on port", PORT);
 });
