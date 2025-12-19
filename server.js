@@ -184,6 +184,16 @@ app.post("/admin/toggle", (req, res) => {
 
   res.send("OK");
 });
+/* ===== ADMIN USERS ===== */
+app.post("/admin/users", (req, res) => {
+  const { password } = req.body;
+
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Wrong password" });
+  }
+
+  res.json(getUsers());
+});
 
 /* ===== START ===== */
 app.listen(PORT, () => {
