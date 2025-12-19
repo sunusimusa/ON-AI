@@ -161,13 +161,26 @@ app.post("/admin/login", (req, res) => {
 
   res.status(401).json({ success: false });
 });
+app.post("/admin/login", (req, res) => {
+  const { password } = req.body;
+
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Wrong password" });
+  }
+
+  res.json({ success: true });
+});
+
 app.get("/admin/users", (req, res) => {
-  if (req.headers.authorization !== "admin-token") {
-    return res.status(401).send("Unauthorized");
+  const password = req.headers["x-admin-password"];
+
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   res.json(getUsers());
 });
+
 app.post("/admin/toggle", (req, res) => {
   if (req.headers.authorization !== "admin-token") {
     return res.status(401).send("Unauthorized");
