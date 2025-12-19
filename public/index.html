@@ -6,58 +6,38 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f9;
-}
-
-.box {
-  max-width: 600px;
-  margin: 30px auto;
-  background: #ffffff;
-  padding: 15px;
-  border-radius: 8px;
-}
-
-#chat {
-  min-height: 300px;
-  border: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 10px;
-  overflow-y: auto;
-}
-
-.msg { margin-bottom: 6px; }
-.user { color: #007bff; }
-.ai { color: #000; }
+body { font-family: Arial, sans-serif; background:#f4f6f9; }
+.box { max-width:600px; margin:30px auto; background:#fff; padding:15px; border-radius:8px; }
+#chat { min-height:250px; border:1px solid #ccc; padding:10px; margin-bottom:10px; overflow-y:auto; }
+.msg { margin-bottom:6px; }
+.user { color:#007bff; }
+.ai { color:#000; }
 </style>
 </head>
 
 <body>
-
 <div class="box">
   <h2>Tele Tech AI</h2>
 
   <div id="chat"></div>
-<hr>
 
-<h3>🎨 AI Image Generator (PRO)</h3>
-
-<input id="imagePrompt" placeholder="Rubuta abinda kake so a hoto..." style="width:75%">
-<button id="imgBtn">Generate</button>
-
-<br><br>
-<img id="resultImg" style="max-width:100%; display:none; border-radius:8px;">
   <input id="msg" placeholder="Rubuta sakonka..." style="width:75%">
-  <button id="sendBtn">Send</button>
-
-  <br><br>
-  <button id="upgradeBtn">Upgrade to Pro 🚀</button>
+  <button onclick="sendMsg()">Send</button>
 
   <hr>
 
-  <p style="font-size:14px; text-align:center;">
-    📲 <b>Join WhatsApp Group</b><br>
+  <h3>🎨 AI Image Generator (PRO)</h3>
+  <input id="imagePrompt" placeholder="Rubuta abinda kake so a hoto..." style="width:75%">
+  <button onclick="generateImage()">Generate</button>
+
+  <br><br>
+  <img id="resultImg" style="max-width:100%; display:none; border-radius:8px;">
+
+  <hr>
+
+  <button onclick="upgrade()">Upgrade to Pro 🚀</button>
+
+  <p style="text-align:center;">
     <a href="https://chat.whatsapp.com/G4tqlP1R8rFEUQ03BHviuD" target="_blank">
       👉 Join WhatsApp Group
     </a>
@@ -65,157 +45,100 @@ body {
 </div>
 
 <script>
-/* ===== FREE LIMIT ===== */
-const FREE_LIMIT = 10;
-let usage = JSON.parse(localStorage.getItem("usage") || "{}");
-const today = new Date().toDateString();
-
-if (usage.date !== today) {
-  usage = { count: 0, date: today };
-  localStorage.setItem("usage", JSON.stringify(usage));
-}
-
-/* ===== ELEMENTS ===== */
 const chat = document.getElementById("chat");
-const input = document.getElementById("msg");
-const sendBtn = document.getElementById("sendBtn");
-const upgradeBtn = document.getElementById("upgradeBtn");
+const FREE_LIMIT = 10;
 
-/* ===== LOAD OLD CHAT ===== */
-const saved = JSON.parse(localStorage.getItem("chatData") || "[]");
-saved.forEach(addToChat);
+let usage = JSON.parse(localStorage.getItem("usage") || '{"count":0}');
+let email = localStorage.getItem("email");
 
-/* ===== SEND MESSAGE ===== */
-sendBtn.addEventListener("click", sendMsg);
-
-async function sendMsg() {
-  const text = input.value.trim();
-  if (!text) return;
-
-  let isProUser = false;
-
-async function sendMsg() {
-  const text = input.value.trim();
-  if (!text) return;
-
-  let email = localStorage.getItem("email");
-  if (!email) {
-    email = prompt("Shigar da email dinka:");
-    if (!email) return;
-    localStorage.setItem("email", email);
-  }
-
-  if (!isProUser && usage.count >= FREE_LIMIT) {
-    alert("❌ Free limit ya cika (10 messages/day). Ka upgrade.");
-    return;
-  }
-
-  addAndSave("You", text);
-  input.value = "";
-
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: text, email })
-  });
-
-  const data = await res.json();
-  addAndSave("AI", data.reply || "Error");
-
-  if (data.pro) {
-    isProUser = true;
-  } else {
-    usage.count++;
-    localStorage.setItem("usage", JSON.stringify(usage));
-  }
-}
-
-  let email = localStorage.getItem("email");
-  if (!email) {
-    email = prompt("Shigar da email dinka:");
-    if (!email) return;
-    localStorage.setItem("email", email);
-  }
-
-  addAndSave("You", text);
-  input.value = "";
-
-  try {
-    const res = await fetch("/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text, email })
-    });
-
-    const data = await res.json();
-    addAndSave("AI", data.reply || "Error");
-
-    usage.count++;
-    localStorage.setItem("usage", JSON.stringify(usage));
-
-  } catch {
-    addAndSave("AI", "Server error ❌");
-  }
-}
-
-/* ===== CHAT HELPERS ===== */
-function addAndSave(role, text) {
-  const msg = { role, text };
-  saveMsg(msg);
-  addToChat(msg);
-}
-
-function addToChat(msg) {
-  const div = document.createElement("div");
-  div.className = "msg " + (msg.role === "You" ? "user" : "ai");
-  div.innerHTML = `<b>${msg.role}:</b> ${msg.text}`;
-  chat.appendChild(div);
+/* ===== HELPERS ===== */
+function add(role, text) {
+  const d = document.createElement("div");
+  d.className = "msg " + (role === "You" ? "user" : "ai");
+  d.innerHTML = `<b>${role}:</b> ${text}`;
+  chat.appendChild(d);
   chat.scrollTop = chat.scrollHeight;
 }
 
-function saveMsg(msg) {
-  const data = JSON.parse(localStorage.getItem("chatData") || "[]");
-  data.push(msg);
-  localStorage.setItem("chatData", JSON.stringify(data));
-}
-
-/* ===== UPGRADE BUTTON ===== */
-upgradeBtn.addEventListener("click", async () => {
-  let email = localStorage.getItem("email");
+function getEmail() {
   if (!email) {
-    email = prompt("Enter your email for Pro upgrade:");
-    if (!email) return;
+    email = prompt("Shigar da email dinka:");
+    if (!email) return null;
     localStorage.setItem("email", email);
   }
+  return email;
+}
 
-  upgradeBtn.disabled = true;
-  upgradeBtn.innerText = "Redirecting...";
+/* ===== CHAT ===== */
+async function sendMsg() {
+  const text = msg.value.trim();
+  if (!text) return;
 
-  try {
-    const res = await fetch("/pay", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, amount: 1000 })
-    });
+  const userEmail = getEmail();
+  if (!userEmail) return;
 
-    const data = await res.json();
-    if (data.link) {
-      window.location.href = data.link;
-    } else {
-      alert("Payment init failed");
-      resetBtn();
-    }
-  } catch {
-    alert("Network error");
-    resetBtn();
+  if (usage.count >= FREE_LIMIT) {
+    alert("❌ Free limit ya cika. Ka upgrade.");
+    return;
   }
-});
 
-function resetBtn() {
-  upgradeBtn.disabled = false;
-  upgradeBtn.innerText = "Upgrade to Pro 🚀";
+  add("You", text);
+  msg.value = "";
+
+  const res = await fetch("/chat", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ message:text, email:userEmail })
+  });
+
+  const data = await res.json();
+  add("AI", data.reply);
+
+  if (!data.pro) {
+    usage.count++;
+    localStorage.setItem("usage", JSON.stringify(usage));
+  }
+}
+
+/* ===== IMAGE (PRO) ===== */
+async function generateImage() {
+  const prompt = imagePrompt.value.trim();
+  if (!prompt) return;
+
+  const userEmail = getEmail();
+  if (!userEmail) return;
+
+  const res = await fetch("/image", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ prompt, email:userEmail })
+  });
+
+  const data = await res.json();
+
+  if (!data.url) {
+    alert(data.error || "Image error");
+    return;
+  }
+
+  resultImg.src = data.url;
+  resultImg.style.display = "block";
+}
+
+/* ===== UPGRADE ===== */
+async function upgrade() {
+  const userEmail = getEmail();
+  if (!userEmail) return;
+
+  const res = await fetch("/pay", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ email:userEmail, amount:1000 })
+  });
+
+  const data = await res.json();
+  if (data.link) window.location.href = data.link;
 }
 </script>
-
 </body>
 </html>
