@@ -8,8 +8,6 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 const ADMIN_PASSWORD = 
 process.env.ADMIN_PASSWORD;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "1234";
-let ADMIN_TOKEN = null;
 
 /* ===== OPENAI ===== */
 const openai = new OpenAI({
@@ -127,28 +125,57 @@ app.post("/admin/login", (req, res) => {
 
 app.get("/admin/users", (req, res) => {
   if (req.headers.authorization !== "admin-token") {
+/* ===== ADMIN AUTH ===== */
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+let ADMIN_TOKEN = null;
+
+/* ===== ADMIN LOGIN ===== */
+app.post("/admin/login", (req, res) => {
+  const { password } = req.body;
+
+  if (!password) {
+    return res.status(400).json({ error: "Missing password" });
+  }
+
+  if (password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Wrong password" });
+  }
+
+  ADMIN_TOKEN = "admin-" + Date.now();
+  res.json({ token: ADMIN_TOKEN });
+});
+
+/* ===== GET USERS ===== */
+app.get("/admin/users", (req, res) => {
+  const token = req.headers.authorization;
+
+  if (!token || token !== ADMIN_TOKEN) {
     return res.status(401).send("Unauthorized");
   }
+
   res.json(getUsers());
 });
 
+/* ===== TOGGLE USER PLAN ===== */
 app.post("/admin/toggle", (req, res) => {
-  if (req.headers.authorization !== "admin-token") {
+  const token = req.headers.authorization;
+  const { email } = req.body;
+
+  if (!token || token !== ADMIN_TOKEN) {
     return res.status(401).send("Unauthorized");
   }
 
-  const { email } = req.body;
   let users = getUsers();
   let user = users.find(u => u.email === email);
 
-  if (user) {
-    user.plan = user.plan === "pro" ? "free" : "pro";
-  } else {
-    users.push({ email, plan: "pro" });
+  if (!user) {
+    return res.status(404).send("User not found");
   }
 
+  user.plan = user.plan === "pro" ? "free" : "pro";
   saveUsers(users);
-  res.send("OK");
+
+  res.json({ success: true });
 });
 
 /* ===== START ===== */
