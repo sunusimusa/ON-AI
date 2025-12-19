@@ -6,7 +6,10 @@ const OpenAI = require("openai");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
+const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key";
 /* ================= OPENAI ================= */
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
