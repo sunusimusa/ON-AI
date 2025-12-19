@@ -45,11 +45,35 @@ app.post("/chat", async (req, res) => {
     const users = getUsers();
     const user = users.find(u => u.email === email);
 
-    if (!user || user.plan !== "pro") {
-      return res.json({
-        reply: "❌ Wannan feature na PRO ne. Don Allah ka upgrade."
-      });
+    app.post("/chat", async (req, res) => {
+  try {
+    const { message, email } = req.body;
+    if (!message || !email) {
+      return res.json({ reply: "Missing message or email" });
     }
+
+    const users = getUsers();
+    const user = users.find(u => u.email === email);
+    const isPro = user && user.plan === "pro";
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "You are a helpful assistant." },
+        { role: "user", content: message }
+      ]
+    });
+
+    res.json({
+      reply: completion.choices[0].message.content,
+      pro: isPro
+    });
+
+  } catch (err) {
+    console.error("CHAT ERROR:", err);
+    res.json({ reply: "AI error" });
+  }
+});
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
