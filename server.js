@@ -174,6 +174,16 @@ function requireAdmin(req, res, next) {
   }
   next();
 }
+/* ===== ADMIN LOGIN ===== */
+app.post("/admin/login", (req, res) => {
+  const { password } = req.body;
+
+  if (password === process.env.ADMIN_PASSWORD) {
+    return res.json({ token: "admin-token" });
+  }
+
+  res.status(401).json({ error: "Wrong password" });
+});
 
 /* ===== GET USERS ===== */
 app.get("/admin/users", requireAdmin, (req, res) => {
