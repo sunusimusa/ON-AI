@@ -161,6 +161,14 @@ app.post("/admin/login", (req, res) => {
 
   res.status(401).json({ success: false });
 });
+app.get("/admin/users", (req, res) => {
+  if (req.headers.authorization !== "admin-token") {
+    return res.status(401).send("Unauthorized");
+  }
+
+  res.json(getUsers());
+});
+
 /* ===== START ===== */
 app.listen(PORT, () => {
   console.log("✅ Server running on port", PORT);
