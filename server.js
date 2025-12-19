@@ -33,23 +33,12 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-/* ===== CHAT API ===== */
+/* ===== CHAT ===== */
 app.post("/chat", async (req, res) => {
   try {
     const { message, email } = req.body;
-
     if (!message || !email) {
       return res.json({ reply: "❌ Missing message or email" });
-    }
-
-    const users = getUsers();
-    const user = users.find(u => u.email === email);
-
-    app.post("/chat", async (req, res) => {
-  try {
-    const { message, email } = req.body;
-    if (!message || !email) {
-      return res.json({ reply: "Missing message or email" });
     }
 
     const users = getUsers();
@@ -71,36 +60,44 @@ app.post("/chat", async (req, res) => {
 
   } catch (err) {
     console.error("CHAT ERROR:", err);
-    res.json({ reply: "AI error" });
+    res.json({ reply: "AI error ❌" });
   }
 });
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "You are a helpful assistant." },
-        { role: "user", content: message }
-      ]
+/* ===== IMAGE GENERATION (PRO ONLY) ===== */
+app.post("/generate-image", async (req, res) => {
+  try {
+    const { prompt, email } = req.body;
+    if (!prompt || !email) {
+      return res.json({ error: "Missing prompt or email" });
+    }
+
+    const users = getUsers();
+    const user = users.find(u => u.email === email);
+    if (!user || user.plan !== "pro") {
+      return res.json({
+        error: "❌ Wannan feature na PRO ne. Don Allah ka upgrade."
+      });
+    }
+
+    const image = await openai.images.generate({
+      model: "gpt-image-1",
+      prompt,
+      size: "1024x1024"
     });
 
-    res.json({
-      reply: completion.choices[0].message.content
-    });
+    res.json({ image: image.data[0].url });
 
   } catch (err) {
-    console.error("CHAT ERROR:", err);
-    res.json({ reply: "AI error" });
+    console.error("IMAGE ERROR:", err);
+    res.status(500).json({ error: "Image generation failed ❌" });
   }
 });
 
-/* ===== PAYMENT INIT ===== */
+/* ===== PAYMENT ===== */
 app.post("/pay", async (req, res) => {
   try {
     const { email, amount } = req.body;
-
-    if (!email || !amount) {
-      return res.status(400).json({ error: "Missing payment data" });
-    }
 
     const response = await axios.post(
       "https://api.flutterwave.com/v3/payments",
@@ -131,76 +128,30 @@ app.post("/pay", async (req, res) => {
   }
 });
 
-/* ===== FLUTTERWAVE WEBHOOK ===== */
+/* ===== WEBHOOK ===== */
 app.post("/webhook", (req, res) => {
-  const secretHash = process.env.FLW_WEBHOOK_SECRET;
   const signature = req.headers["verif-hash"];
-
-  console.log("📩 WEBHOOK RECEIVED");
-
-  if (!signature || signature !== secretHash) {
-    console.log("❌ Invalid webhook signature");
+  if (signature !== process.env.FLW_WEBHOOK_SECRET) {
     return res.status(401).send("Invalid signature");
   }
 
   const event = req.body;
-
-  if (
-    event.event === "charge.completed" &&
-    event.data.status === "successful"
-  ) {
+  if (event.event === "charge.completed" && event.data.status === "successful") {
     const email = event.data.customer.email;
 
-    let users = getUsers();
-    let user = users.find(u => u.email === email);
-
-    if (user) {
-      user.plan = "pro";
-    } else {
-      users.push({ email, plan: "pro" });
-    }
-
-    saveUsers(users);
-    console.log("✅ USER UPGRADED TO PRO:", email);
-  }
-
-  res.status(200).send("OK");
-});
-/* ===== IMAGE GENERATION (PRO ONLY) ===== */
-app.post("/generate-image", async (req, res) => {
-  try {
-    const { prompt, email } = req.body;
-
-    if (!prompt || !email) {
-      return res.json({ error: "Missing prompt or email" });
-    }
-
-    // PRO check
     const users = getUsers();
     const user = users.find(u => u.email === email);
+    if (user) user.plan = "pro";
+    else users.push({ email, plan: "pro" });
 
-    if (!user || user.plan !== "pro") {
-      return res.json({
-        error: "❌ Wannan feature na PRO ne. Don Allah ka upgrade."
-      });
-    }
-
-    const image = await openai.images.generate({
-      model: "gpt-image-1",
-      prompt: prompt,
-      size: "1024x1024"
-    });
-
-    res.json({
-      image: image.data[0].url
-    });
-
-  } catch (err) {
-    console.error("IMAGE ERROR:", err);
-    res.status(500).json({ error: "Image generation failed" });
+    saveUsers(users);
+    console.log("✅ USER UPGRADED:", email);
   }
+
+  res.send("OK");
 });
-/* ===== START SERVER ===== */
+
+/* ===== START ===== */
 app.listen(PORT, () => {
   console.log("✅ Server running on port", PORT);
 });
