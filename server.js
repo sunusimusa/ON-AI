@@ -174,13 +174,42 @@ function requireAdmin(req, res, next) {
   }
   next();
 }
-/* ===== ADMIN LOGIN ===== */
+// ==== ADMIN LOGIN ====
 app.post("/admin/login", (req, res) => {
   const { password } = req.body;
-
   if (password === process.env.ADMIN_PASSWORD) {
     return res.json({ token: "admin-token" });
   }
+  res.json({ error: "Wrong password" });
+});
+
+// ==== ADMIN USERS LIST ====
+app.get("/admin/users", (req, res) => {
+  if (req.headers.authorization !== "admin-token") {
+    return res.status(401).send("Unauthorized");
+  }
+  res.json(getUsers());
+});
+
+// ==== ADMIN TOGGLE USER PLAN ====
+app.post("/admin/toggle", (req, res) => {
+  if (req.headers.authorization !== "admin-token") {
+    return res.status(401).send("Unauthorized");
+  }
+
+  const { email } = req.body;
+  let users = getUsers();
+  let user = users.find(u => u.email === email);
+
+  if (user) {
+    user.plan = user.plan === "pro" ? "free" : "pro";
+  } else {
+    users.push({ email, plan: "pro" });
+  }
+
+  saveUsers(users);
+  res.send("User updated");
+});
 
   res.status(401).json({ error: "Wrong password" });
 });
