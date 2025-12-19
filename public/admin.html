@@ -1,1 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+</head>
+<body>
+<h2>Admin Dashboard</h2>
 
+<input id="password" placeholder="Admin password">
+<button onclick="login()">Login</button>
+
+<hr>
+
+<button onclick="loadUsers()">Load Users</button>
+<ul id="users"></ul>
+
+<script>
+let loggedIn = false;
+
+async function login() {
+  const password = document.getElementById("password").value;
+
+  const res = await fetch("/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password })
+  });
+
+  if (res.ok) {
+    alert("Admin logged in");
+    loggedIn = true;
+  } else {
+    alert("Wrong password");
+  }
+}
+
+async function loadUsers() {
+  if (!loggedIn) return alert("Login first");
+
+  const res = await fetch("/admin/users");
+  const users = await res.json();
+
+  const ul = document.getElementById("users");
+  ul.innerHTML = "";
+
+  users.forEach(u => {
+    const li = document.createElement("li");
+    li.innerHTML = `
+      ${u.email} - <b>${u.plan}</b>
+      <button onclick="upgrade('${u.email}')">Make PRO</button>
+    `;
+    ul.appendChild(li);
+  });
+}
+
+async function upgrade(email) {
+  await fetch("/admin/upgrade", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+
+  alert("Upgraded");
+  loadUsers();
+}
+</script>
+</body>
+</html>
