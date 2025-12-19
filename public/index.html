@@ -6,12 +6,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body { font-family: Arial, sans-serif; background:#f4f6f9; }
-.box { max-width:600px; margin:30px auto; background:#fff; padding:15px; border-radius:8px; }
+body { font-family: Arial; background:#f4f6f9; }
+.box { max-width:600px; margin:20px auto; background:#fff; padding:15px; border-radius:8px; }
 #chat { min-height:250px; border:1px solid #ccc; padding:10px; margin-bottom:10px; overflow-y:auto; }
 .msg { margin-bottom:6px; }
 .user { color:#007bff; }
 .ai { color:#000; }
+img { max-width:100%; margin-top:10px; border-radius:8px; }
 </style>
 </head>
 
@@ -22,22 +23,20 @@ body { font-family: Arial, sans-serif; background:#f4f6f9; }
   <div id="chat"></div>
 
   <input id="msg" placeholder="Rubuta sakonka..." style="width:75%">
-  <button onclick="sendMsg()">Send</button>
+  <button id="sendBtn">Send</button>
 
   <hr>
 
   <h3>🎨 AI Image Generator (PRO)</h3>
   <input id="imagePrompt" placeholder="Rubuta abinda kake so a hoto..." style="width:75%">
-  <button onclick="generateImage()">Generate</button>
-
-  <br><br>
-  <img id="resultImg" style="max-width:100%; display:none; border-radius:8px;">
+  <button id="imgBtn">Generate</button>
+  <img id="resultImg" style="display:none">
 
   <hr>
 
-  <button onclick="upgrade()">Upgrade to Pro 🚀</button>
+  <button id="upgradeBtn">Upgrade to Pro 🚀</button>
 
-  <p style="text-align:center;">
+  <p style="text-align:center;margin-top:10px">
     <a href="https://chat.whatsapp.com/G4tqlP1R8rFEUQ03BHviuD" target="_blank">
       👉 Join WhatsApp Group
     </a>
@@ -45,22 +44,19 @@ body { font-family: Arial, sans-serif; background:#f4f6f9; }
 </div>
 
 <script>
+/* ===== ELEMENTS ===== */
 const chat = document.getElementById("chat");
-const FREE_LIMIT = 10;
+const input = document.getElementById("msg");
+const sendBtn = document.getElementById("sendBtn");
+const upgradeBtn = document.getElementById("upgradeBtn");
 
-let usage = JSON.parse(localStorage.getItem("usage") || '{"count":0}');
-let email = localStorage.getItem("email");
+const imgBtn = document.getElementById("imgBtn");
+const imagePrompt = document.getElementById("imagePrompt");
+const resultImg = document.getElementById("resultImg");
 
-/* ===== HELPERS ===== */
-function add(role, text) {
-  const d = document.createElement("div");
-  d.className = "msg " + (role === "You" ? "user" : "ai");
-  d.innerHTML = `<b>${role}:</b> ${text}`;
-  chat.appendChild(d);
-  chat.scrollTop = chat.scrollHeight;
-}
-
+/* ===== EMAIL ===== */
 function getEmail() {
+  let email = localStorage.getItem("email");
   if (!email) {
     email = prompt("Shigar da email dinka:");
     if (!email) return null;
@@ -70,119 +66,70 @@ function getEmail() {
 }
 
 /* ===== CHAT ===== */
-async function sendMsg() {
-  const text = msg.value.trim();
+sendBtn.addEventListener("click", async () => {
+  const text = input.value.trim();
   if (!text) return;
 
-  const userEmail = getEmail();
-  if (!userEmail) return;
+  const email = getEmail();
+  if (!email) return;
 
-  if (usage.count >= FREE_LIMIT) {
-    alert("❌ Free limit ya cika. Ka upgrade.");
-    return;
-  }
-
-  add("You", text);
-  msg.value = "";
+  chat.innerHTML += `<div class="msg user"><b>You:</b> ${text}</div>`;
+  input.value = "";
 
   const res = await fetch("/chat", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ message:text, email:userEmail })
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text, email })
   });
 
   const data = await res.json();
-  add("AI", data.reply);
+  chat.innerHTML += `<div class="msg ai"><b>AI:</b> ${data.reply}</div>`;
+});
 
-  if (!data.pro) {
-    usage.count++;
-    localStorage.setItem("usage", JSON.stringify(usage));
-  }
-}
-
-/* ===== IMAGE (PRO) ===== */
-async function generateImage() {
-  const prompt = imagePrompt.value.trim();
-  if (!prompt) return;
-
-  const userEmail = getEmail();
-  if (!userEmail) return;
-
-  const res = await fetch("/image", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ prompt, email:userEmail })
-  });
-
-  const data = await res.json();
-
-  if (!data.url) {
-    alert(data.error || "Image error");
-    return;
-  }
-
-  resultImg.src = data.url;
-  resultImg.style.display = "block";
-}
-
-/* ===== UPGRADE ===== */
-async function upgrade() {
-  const userEmail = getEmail();
-  if (!userEmail) return;
-
-  const res = await fetch("/pay", {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({ email:userEmail, amount:1000 })
-  });
-
-  const data = await res.json();
-  if (data.link) window.location.href = data.link;
-}
-<script>
-const imgBtn = document.getElementById("imgBtn");
-const imagePrompt = document.getElementById("imagePrompt");
-const resultImg = document.getElementById("resultImg");
-
+/* ===== IMAGE GENERATOR ===== */
 imgBtn.addEventListener("click", async () => {
-  const promptText = imagePrompt.value.trim();
-  if (!promptText) {
-    alert("Rubuta abinda kake so a hoto");
-    return;
-  }
+  const prompt = imagePrompt.value.trim();
+  if (!prompt) return alert("Rubuta prompt");
 
-  let email = localStorage.getItem("email");
-  if (!email) {
-    email = prompt("Shigar da email dinka:");
-    if (!email) return;
-    localStorage.setItem("email", email);
-  }
+  const email = getEmail();
+  if (!email) return;
 
   imgBtn.disabled = true;
   imgBtn.innerText = "Generating...";
 
-  try {
-    const res = await fetch("/generate-image", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: promptText, email })
-    });
+  const res = await fetch("/generate-image", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, email })
+  });
 
-    const data = await res.json();
+  const data = await res.json();
 
-    if (data.error) {
-      alert(data.error);
-    } else {
-      resultImg.src = data.image;
-      resultImg.style.display = "block";
-    }
-
-  } catch (e) {
-    alert("Image generation failed");
+  if (data.error) {
+    alert(data.error);
+  } else {
+    resultImg.src = data.image;
+    resultImg.style.display = "block";
   }
 
   imgBtn.disabled = false;
   imgBtn.innerText = "Generate";
+});
+
+/* ===== UPGRADE ===== */
+upgradeBtn.addEventListener("click", async () => {
+  const email = getEmail();
+  if (!email) return;
+
+  upgradeBtn.innerText = "Redirecting...";
+  const res = await fetch("/pay", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, amount: 1000 })
+  });
+
+  const data = await res.json();
+  if (data.link) window.location.href = data.link;
 });
 </script>
 </body>
