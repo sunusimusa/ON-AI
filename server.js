@@ -148,14 +148,26 @@ app.post("/webhook", (req, res) => {
 
   const event = req.body;
 
-  if (
+if (
     event.event === "charge.completed" &&
     event.data.status === "successful"
   ) {
     const email = event.data.customer.email;
-    console.log("✅ Payment successful:", email);
 
-    makeUserPro(email); // 🔥 AUTO-UPGRADE
+    let users = getUsers();
+    let user = users.find(u => u.email === email);
+
+    if (user) {
+      user.plan = "pro";
+    } else {
+      users.push({
+        email: email,
+        plan: "pro"
+      });
+    }
+
+    saveUsers(users);
+    console.log("✅ User upgraded to PRO:", email);
   }
 
   res.status(200).send("OK");
