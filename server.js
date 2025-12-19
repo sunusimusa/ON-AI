@@ -7,9 +7,6 @@ const OpenAI = require("openai");
 const app = express();
 const PORT = process.env.PORT || 10000;
 
-/* ================== CONFIG ================== */
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
-
 /* ================== OPENAI ================== */
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -133,29 +130,36 @@ app.post("/pay", async (req, res) => {
     res.status(500).json({ error: "Payment failed" });
   }
 });
+/* ===== ADMIN AUTH ===== */
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-/* ================== ADMIN LOGIN ================== */
+/* ===== ADMIN LOGIN ===== */
 app.post("/admin/login", (req, res) => {
   const { password } = req.body;
 
-  if (password === ADMIN_PASSWORD) {
-    return res.json({ token: "admin-token" });
+  if (!password || password !== ADMIN_PASSWORD) {
+    return res.status(401).json({ error: "Wrong password" });
   }
 
-  res.status(401).json({ error: "Wrong password" });
+  // simple token
+  res.json({ token: "admin" });
 });
 
-/* ================== ADMIN USERS ================== */
+/* ===== GET USERS ===== */
 app.get("/admin/users", (req, res) => {
-  if (req.headers.authorization !== "admin-token") {
+  const auth = req.headers.authorization;
+
+  if (auth !== "admin") {
     return res.status(401).send("Unauthorized");
   }
+
   res.json(getUsers());
 });
 
-/* ================== ADMIN TOGGLE ================== */
+/* ===== TOGGLE USER PLAN ===== */
 app.post("/admin/toggle", (req, res) => {
-  if (req.headers.authorization !== "admin-token") {
+  const auth = req.headers.authorization;
+  if (auth !== "admin") {
     return res.status(401).send("Unauthorized");
   }
 
@@ -163,10 +167,10 @@ app.post("/admin/toggle", (req, res) => {
   let users = getUsers();
 
   const user = users.find(u => u.email === email);
-  if (user) {
-    user.plan = user.plan === "pro" ? "free" : "pro";
-    saveUsers(users);
-  }
+  if (!user) return res.status(404).send("User not found");
+
+  user.plan = user.plan === "pro" ? "free" : "pro";
+  saveUsers(users);
 
   res.json({ success: true });
 });
