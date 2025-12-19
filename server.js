@@ -166,7 +166,40 @@ app.post("/webhook", (req, res) => {
 
   res.status(200).send("OK");
 });
+/* ===== IMAGE GENERATION (PRO ONLY) ===== */
+app.post("/generate-image", async (req, res) => {
+  try {
+    const { prompt, email } = req.body;
 
+    if (!prompt || !email) {
+      return res.json({ error: "Missing prompt or email" });
+    }
+
+    // PRO check
+    const users = getUsers();
+    const user = users.find(u => u.email === email);
+
+    if (!user || user.plan !== "pro") {
+      return res.json({
+        error: "❌ Wannan feature na PRO ne. Don Allah ka upgrade."
+      });
+    }
+
+    const image = await openai.images.generate({
+      model: "gpt-image-1",
+      prompt: prompt,
+      size: "1024x1024"
+    });
+
+    res.json({
+      image: image.data[0].url
+    });
+
+  } catch (err) {
+    console.error("IMAGE ERROR:", err);
+    res.status(500).json({ error: "Image generation failed" });
+  }
+});
 /* ===== START SERVER ===== */
 app.listen(PORT, () => {
   console.log("✅ Server running on port", PORT);
