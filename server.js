@@ -19,6 +19,25 @@ const openai = new OpenAI({
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 let ADMIN_TOKEN = "";
 
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  const users = getUsers();
+  const user = users.find(
+    u => u.email === email && u.password === hashPassword(password)
+  );
+
+  if (!user) {
+    return res.json({ error: "Invalid login" });
+  }
+
+  res.json({
+    success: true,
+    email: user.email,
+    plan: user.plan
+  });
+});
+
 /* ================= USERS STORAGE ================= */
 function hashPassword(password) {
   return crypto.createHash("sha256").update(password).digest("hex");
@@ -42,6 +61,30 @@ app.use(express.static(path.join(__dirname, "public")));
 /* ================= HOME ================= */
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+app.post("/register", (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.json({ error: "Missing email or password" });
+  }
+
+  const users = getUsers();
+  const exists = users.find(u => u.email === email);
+
+  if (exists) {
+    return res.json({ error: "User already exists" });
+  }
+
+  users.push({
+    email,
+    password: hashPassword(password),
+    plan: "free"
+  });
+
+  saveUsers(users);
+
+  res.json({ success: true });
 });
 
 /* ================= CHAT ================= */
