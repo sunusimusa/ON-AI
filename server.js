@@ -68,16 +68,23 @@ app.get("/chat", (req, res) => {
 });
 
 // 🤖 CHAT API (TEST RESPONSE)
-return res.json({
-  reply: message
-});
+app.post("/chat", (req, res) => {
+  try {
+    const { message } = req.body;
 
-  if (!message) {
-    return res.json({ reply: "No message received" });
+    if (!message) {
+      return res.json({ reply: "Rubuta saƙo tukuna" });
+    }
+
+    // 👇 ANAN KA CANZA REPLY
+    return res.json({
+      reply: "Na ji ka 👍"
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ reply: "Server error" });
   }
-
-  return res.json({
-  reply: message
 });
 
 // 🚀 START SERVER
