@@ -75,9 +75,8 @@ app.post("/chat", (req, res) => {
     return res.json({ reply: "No message received" });
   }
 
-  res.json({
-    reply: "Na karɓi saƙonka: " + message
-  });
+  return res.json({
+  reply: message
 });
 
 // 🚀 START SERVER
