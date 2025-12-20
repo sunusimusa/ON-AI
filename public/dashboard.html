@@ -1,1 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+</head>
+<body>
 
+<h2>Welcome 🎉</h2>
+
+<p>Email: <span id="email"></span></p>
+
+<button onclick="logout()">Logout</button>
+
+<script>
+const email = localStorage.getItem("email");
+
+if (!email) {
+  window.location.href = "/index.html";
+}
+
+document.getElementById("email").innerText = email;
+
+function logout() {
+  localStorage.removeItem("email");
+  window.location.href = "/index.html";
+}
+</script>
+
+</body>
+</html>
