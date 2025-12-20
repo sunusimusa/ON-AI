@@ -85,9 +85,6 @@ app.post("/login", async (req, res) => {
     plan: user.plan
   });
 });
-app.get("/chat", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "chat.html"));
-});
 app.post("/chat", async (req, res) => {
   try {
     const { message, email } = req.body;
@@ -96,7 +93,7 @@ app.post("/chat", async (req, res) => {
       return res.json({ reply: "No message received" });
     }
 
-    // TEMP TEST (domin mu tabbatar backend na aiki)
+    // TEST RESPONSE (domin mu tabbatar yana aiki)
     return res.json({
       reply: "Na karɓi saƙonka: " + message
     });
