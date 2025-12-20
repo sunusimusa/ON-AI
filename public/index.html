@@ -23,16 +23,10 @@
   Ba ka da account?
   <a href="/register.html">Create account</a>
 </p>
-
 <script>
 async function generateImage() {
   const prompt = document.getElementById("prompt").value;
   const email = localStorage.getItem("email");
-
-  if (!email) {
-    alert("Please login first");
-    return;
-  }
 
   const res = await fetch("/generate", {
     method: "POST",
@@ -44,9 +38,14 @@ async function generateImage() {
 
   if (data.error) {
     alert(data.error);
-  } else {
-    alert("Generated! Remaining: " + data.remaining);
+    return;
   }
+
+  const img = document.getElementById("resultImage");
+  img.src = data.image;
+  img.style.display = "block";
+
+  alert("Generated! Remaining: " + data.remaining);
 }
 
 async function verifyAccount() {
