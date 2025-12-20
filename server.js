@@ -68,22 +68,35 @@ app.get("/chat", (req, res) => {
 });
 
 // 🤖 CHAT API (TEST RESPONSE)
-app.post("/chat", (req, res) => {
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
 
     if (!message) {
-      return res.json({ reply: "Rubuta saƙo tukuna" });
+      return res.json({ reply: "Rubuta sako tukuna." });
     }
 
-    // 👇 ANAN KA CANZA REPLY
-    return res.json({
-      reply: "Na ji ka 👍"
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        { role: "system", content: "Kai AI ne mai taimako, kana amsa da Hausa idan ya dace." },
+        { role: "user", content: message }
+      ]
     });
+
+    const reply = completion.choices[0].message.content;
+
+    res.json({ reply });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ reply: "Server error" });
+    res.status(500).json({ reply: "AI error, gwada daga baya." });
   }
 });
 
