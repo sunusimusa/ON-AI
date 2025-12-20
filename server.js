@@ -71,25 +71,18 @@ app.post("/login", async (req, res) => {
   const user = users.find(u => u.email === email);
 
   if (!user) {
-    return res.json({ error: "User not found" });
+    return res.json({ success: false, error: "User not found" });
   }
 
-  const match = await bcrypt.compare(password, user.password);
-  if (!match) {
-    return res.json({ error: "Wrong password" });
+  const ok = await bcrypt.compare(password, user.password);
+  if (!ok) {
+    return res.json({ success: false, error: "Wrong password" });
   }
-
-  const token = jwt.sign(
-    { email: user.email, plan: user.plan },
-    JWT_SECRET,
-    { expiresIn: "7d" }
-  );
 
   res.json({
     success: true,
     email: user.email,
-    plan: user.plan,
-    token
+    plan: user.plan
   });
 });
 
