@@ -71,7 +71,6 @@ app.get("/chat", (req, res) => {
 return res.json({
   reply: message
 });
-  const { message } = req.body;
 
   if (!message) {
     return res.json({ reply: "No message received" });
