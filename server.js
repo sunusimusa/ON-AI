@@ -88,6 +88,25 @@ app.post("/login", async (req, res) => {
 app.get("/chat", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
+app.post("/chat", async (req, res) => {
+  try {
+    const { message, email } = req.body;
+
+    if (!message) {
+      return res.json({ reply: "No message received" });
+    }
+
+    // TEMP TEST (domin mu tabbatar backend na aiki)
+    return res.json({
+      reply: "Na karɓi saƙonka: " + message
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ reply: "Server error" });
+  }
+});
+
 /* ========= START ========= */
 app.listen(PORT, () => {
   console.log("✅ Server running on port", PORT);
