@@ -8,6 +8,22 @@ const PORT = process.env.PORT || 10000;
 
 /* ===== FILE ===== */
 const USERS_FILE = path.join(__dirname, "data", "users.json");
+function canGenerate(user) {
+  const today = new Date().toISOString().slice(0, 10);
+
+  // idan sabuwar rana ce
+  if (user.lastUsed !== today) {
+    user.lastUsed = today;
+    user.dailyCount = 0;
+  }
+
+  // free limit
+  if (user.plan === "free" && user.dailyCount >= 5) {
+    return false;
+  }
+
+  return true;
+}
 
 /* ===== HELPERS ===== */
 function getUsers() {
