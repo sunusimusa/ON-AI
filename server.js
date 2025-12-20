@@ -103,16 +103,45 @@ app.post("/login", async (req, res) => {
     res.status(500).json({ success: false, error: "Server error" });
   }
 });
-app.post("/generate", (req, res) => {
-  const { prompt } = req.body;
+function canGenerate(user) {
+  const today = new Date().toISOString().slice(0, 10);
 
-  if (!prompt) {
-    return res.json({ error: "No prompt provided" });
+  if (user.lastUsed !== today) {
+    user.lastUsed = today;
+    user.dailyCount = 0;
   }
 
-  // TEMP: fake image (test only)
+  if (user.plan === "free" && user.dailyCount >= 5) {
+    return false;
+  }
+
+  return true;
+}
+
+app.post("/generate", (req, res) => {
+  const { email } = req.body;
+
+  const users = getUsers();
+  const user = users.find(u => u.email === email);
+
+  if (!user) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  if (!canGenerate(user)) {
+    return res.status(403).json({
+      error: "Daily free limit reached. Upgrade to Pro."
+    });
+  }
+
+  user.dailyCount += 1;
+  saveUsers(users);
+
   res.json({
-    image: "https://via.placeholder.com/512?text=AI+Image"
+    success: true,
+    message: "Image generated",
+    remaining:
+      user.plan === "free" ? 5 - user.dailyCount : "unlimited"
   });
 });
 
