@@ -14,18 +14,51 @@
 <div id="chat"></div>
 
 <script>
-async function send() {
-  const msg = document.getElementById("msg").value;
+const input = document.getElementById("msg");
+const sendBtn = document.getElementById("sendBtn");
+const chat = document.getElementById("chat");
 
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ message: msg })
-  });
+sendBtn.addEventListener("click", sendMessage);
 
-  const data = await res.json();
-  document.getElementById("chat").innerHTML +=
-    "<p><b>AI:</b> " + data.reply + "</p>";
+input.addEventListener("keypress", function(e) {
+  if (e.key === "Enter") {
+    sendMessage();
+  }
+});
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  const email = localStorage.getItem("email");
+  if (!email) {
+    alert("Please login again");
+    window.location.href = "/";
+    return;
+  }
+
+  // nuna sakon user
+  chat.innerHTML += `<p><b>You:</b> ${text}</p>`;
+
+  // 👉 GOGE INPUT NAN TAKE
+  input.value = "";
+
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, email })
+    });
+
+    const data = await res.json();
+
+    // nuna amsar AI
+    chat.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`;
+    chat.scrollTop = chat.scrollHeight;
+
+  } catch (err) {
+    chat.innerHTML += `<p style="color:red">Server error</p>`;
+  }
 }
 </script>
 
