@@ -119,6 +119,28 @@ app.post("/verify", (req, res) => {
   res.json({ success: true });
 });
 
+app.post("/watch-ad", (req, res) => {
+  const { email } = req.body;
+
+  const users = getUsers();
+  const user = users.find(u => u.email === email);
+
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  user.adsWatched = (user.adsWatched || 0) + 1;
+
+  // bonus: ƙara free count
+  user.dailyCount = Math.max(0, user.dailyCount - 1);
+
+  saveUsers(users);
+
+  res.json({
+    success: true,
+    message: "Ad watched. 1 free generation added."
+  });
+});
 app.post("/generate", (req, res) => {
   const { email, prompt } = req.body;
 
@@ -139,7 +161,7 @@ app.post("/generate", (req, res) => {
   // ✅ DAILY LIMIT CHECK
   if (user.plan === "free" && user.dailyCount >= 5) {
     return res.status(403).json({
-      error: "Daily free limit reached. Upgrade to Pro."
+      error: "Daily free limit reached. Watch an ad or upgrade to Pro."
     });
   }
 
@@ -150,7 +172,6 @@ app.post("/generate", (req, res) => {
 
   res.json({
     success: true,
-    imageUrl: "https://via.placeholder.com/300",
     remaining: user.plan === "free" ? 5 - user.dailyCount : "unlimited"
   });
 });
