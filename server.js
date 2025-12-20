@@ -68,7 +68,9 @@ app.get("/chat", (req, res) => {
 });
 
 // 🤖 CHAT API (TEST RESPONSE)
-app.post("/chat", (req, res) => {
+return res.json({
+  reply: message
+});
   const { message } = req.body;
 
   if (!message) {
