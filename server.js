@@ -57,20 +57,37 @@ app.post("/register", async (req, res) => {
 });
 
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  const users = getUsers();
-  const user = users.find(u => u.email === email);
-  if (!user) return res.json({ error: "Invalid login" });
+    if (!email || !password) {
+      return res.json({ success: false, error: "Missing fields" });
+    }
 
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok) return res.json({ error: "Invalid login" });
+    const users = getUsers();
+    const user = users.find(u => u.email === email);
 
-  const token = jwt.sign(
-    { email: user.email, plan: user.plan },
-    JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+    if (!user) {
+      return res.json({ success: false, error: "User not found" });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.json({ success: false, error: "Wrong password" });
+    }
+
+    // LOGIN SUCCESS
+    res.json({
+      success: true,
+      email: user.email,
+      plan: user.plan || "free"
+    });
+
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    res.json({ success: false, error: "Server error" });
+  }
+});
 
   res.json({
     success: true,
