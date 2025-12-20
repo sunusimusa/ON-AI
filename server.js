@@ -107,7 +107,9 @@ app.post("/chat", async (req, res) => {
     res.status(500).json({ reply: "Server error" });
   }
 });
-
+app.get("/chat", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "chat.html"));
+});
 /* ========= START ========= */
 app.listen(PORT, () => {
   console.log("✅ Server running on port", PORT);
