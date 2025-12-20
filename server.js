@@ -1,106 +1,37 @@
 const express = require("express");
-const fs = require("fs");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 const PORT = process.env.PORT || 10000;
 
+/* ===== MIDDLEWARE ===== */
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.static("public"));
 
-// 🔑 SERVE PUBLIC FOLDER
-app.use(express.static(path.join(__dirname, "public")));
+/* ===== CHAT TEST ENDPOINT ===== */
+app.post("/chat", (req, res) => {
+  const { message } = req.body;
 
-// 📁 USERS FILE
-const USERS_FILE = path.join(__dirname, "data", "users.json");
+  if (!message) {
+    return res.json({ reply: "Ba ka rubuta sako ba" });
+  }
 
-function loadUsers() {
-  if (!fs.existsSync(USERS_FILE)) return [];
-  return JSON.parse(fs.readFileSync(USERS_FILE));
-}
+  return res.json({
+    reply: "Na ji ka 👍"
+  });
+});
 
-function saveUsers(users) {
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-}
-
-// 🏠 LOGIN PAGE
+/* ===== ROUTES ===== */
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// 📝 REGISTER
-app.post("/register", (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.json({ error: "All fields required" });
-  }
-
-  const users = loadUsers();
-  if (users.find(u => u.email === email)) {
-    return res.json({ error: "User already exists" });
-  }
-
-  users.push({ email, password });
-  saveUsers(users);
-
-  res.json({ success: true });
-});
-
-// 🔐 LOGIN
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
-  const users = loadUsers();
-
-  const user = users.find(
-    u => u.email === email && u.password === password
-  );
-
-  if (!user) {
-    return res.json({ error: "Invalid login" });
-  }
-
-  res.json({ success: true, email });
-});
-
-// 💬 CHAT PAGE (WANNAN NE MUHIMMI)
 app.get("/chat", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "chat.html"));
 });
 
-// 🤖 CHAT API (TEST RESPONSE)
-import OpenAI from "openai";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
-
-app.post("/chat", async (req, res) => {
-  try {
-    const { message } = req.body;
-
-    if (!message) {
-      return res.json({ reply: "Rubuta sako tukuna." });
-    }
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: "Kai AI ne mai taimako, kana amsa da Hausa idan ya dace." },
-        { role: "user", content: message }
-      ]
-    });
-
-    const reply = completion.choices[0].message.content;
-
-    res.json({ reply });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ reply: "AI error, gwada daga baya." });
-  }
-});
-
-// 🚀 START SERVER
+/* ===== START SERVER ===== */
 app.listen(PORT, () => {
   console.log("✅ Server running on port " + PORT);
 });
