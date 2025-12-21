@@ -189,8 +189,30 @@ app.get("/admin/stats", (req, res) => {
 
   res.json(stats);
 });
+// ===============================
+// ADMIN: GET ALL USERS + STATS
+// ===============================
+app.get("/admin/users", (req, res) => {
+  const users = getUsers();
+
+  const totalUsers = users.length;
+  const proUsers = users.filter(u => u.plan === "pro").length;
+  const totalImages = users.reduce(
+    (sum, u) => sum + (u.dailyCount || 0),
+    0
+  );
+
+  res.json({
+    stats: {
+      users: totalUsers,
+      pro: proUsers,
+      images: totalImages
+    },
+    users
+  });
+});
 
 /* ================= START ================= */
 app.listen(PORT, () => {
-  console.log("✅ Web AI server running on port", PORT);
+  console.log("✅ Server running on port " + PORT);
 });
