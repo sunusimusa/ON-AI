@@ -64,7 +64,34 @@ app.post("/pay", (req, res) => {
     amount: 200 // ₦200 example
   });
 });
+/* ================= WATCH AD (+1 IMAGE) ================= */
+app.post("/watch-ad", (req, res) => {
+  const { email } = req.body;
 
+  if (!email) {
+    return res.status(400).json({ error: "Email required" });
+  }
+
+  const users = getUsers();
+  const user = users.find(u => u.email === email);
+
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  // idan free user ne, a bashi extra chance
+  if (user.plan === "free") {
+    if (user.dailyCount > 0) {
+      user.dailyCount -= 1; // +1 image
+    }
+    saveUsers(users);
+  }
+
+  res.json({
+    success: true,
+    message: "Ad watched. +1 image added"
+  });
+});
 /* ================== START ================== */
 app.listen(PORT, () => {
   console.log("✅ Server running on port " + PORT);
