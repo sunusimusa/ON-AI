@@ -7,94 +7,84 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f6f9;
-      padding: 20px;
       max-width: 600px;
       margin: auto;
+      padding: 20px;
+      background: #f5f5f5;
     }
 
-    h2 {
-      text-align: center;
-    }
-
-    .row {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
-    }
-
-    input {
-      flex: 1;
+    input, button {
       padding: 10px;
+      margin-top: 8px;
+      width: 100%;
       font-size: 15px;
     }
 
     button {
-      padding: 10px 14px;
-      font-size: 15px;
       cursor: pointer;
+    }
+
+    img {
+      margin-top: 15px;
+      max-width: 100%;
+      display: none;
+      border-radius: 6px;
     }
 
     #status {
       margin-top: 10px;
       font-weight: bold;
-      text-align: center;
     }
 
-    #resultImage {
-      margin-top: 15px;
-      max-width: 100%;
-      display: none;
-      border-radius: 8px;
+    .locked {
+      background: #ccc;
+      cursor: not-allowed;
     }
   </style>
 </head>
 
 <body>
 
-  <h2>🖼️ Tele Image AI (FREE)</h2>
+  <h2>🎨 AI Image Generator</h2>
 
-  <div class="row">
-    <input id="prompt" placeholder="Describe image (e.g. a lion wearing crown)" />
-    <button onclick="generateImage()">Generate</button>
-  </div>
+  <input id="prompt" placeholder="Describe image (e.g. a lion wearing sunglasses)" />
+  <button onclick="generateImage()">Generate Image</button>
 
   <div id="status"></div>
 
   <img id="resultImage" />
 
+  <!-- 🔒 DOWNLOAD LOCKED -->
+  <button id="downloadBtn" class="locked" disabled>
+    🔒 Unlock Download (₦500)
+  </button>
+
 <script>
+let imageUrl = "";
+
 async function generateImage() {
-  const prompt = document.getElementById("prompt").value.trim();
+  const prompt = document.getElementById("prompt").value;
   const status = document.getElementById("status");
   const img = document.getElementById("resultImage");
 
   if (!prompt) {
-    alert("Rubuta abinda kake so");
+    alert("Please write image description");
     return;
   }
 
   status.innerText = "⏳ Generating image...";
   img.style.display = "none";
 
-  // Pollinations AI (FREE)
-  const url =
-    "https://image.pollinations.ai/prompt/" +
-    encodeURIComponent(prompt);
+  // ✅ POLLINATIONS IMAGE
+  imageUrl = "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt);
 
-  // preload image
+  img.src = imageUrl;
   img.onload = () => {
-    status.innerText = "✅ Image generated successfully";
     img.style.display = "block";
+    status.innerText = "✅ Image ready. Download is locked 🔒";
   };
-
-  img.onerror = () => {
-    status.innerText = "❌ Failed to generate image";
-  };
-
-  img.src = url;
 }
 </script>
 
 </body>
-</html>
+  </html>
