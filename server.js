@@ -3,8 +3,6 @@ const fs = require("fs");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 
-require("./telegram");
-
 const app = express();
 const PORT = process.env.PORT || 10000;
 
