@@ -159,6 +159,17 @@ app.post("/upgrade", (req, res) => {
 
   res.json({ success: true, plan: "pro" });
 });
+/* ===== ADMIN: GET ALL USERS ===== */
+app.get("/admin/users", (req, res) => {
+  const adminKey = req.headers["x-admin-key"];
+
+  if (adminKey !== process.env.ADMIN_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const users = getUsers();
+  res.json(users);
+});
 
 /* ================= START ================= */
 app.listen(PORT, () => {
