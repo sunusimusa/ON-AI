@@ -170,6 +170,25 @@ app.get("/admin/users", (req, res) => {
   const users = getUsers();
   res.json(users);
 });
+/* ===== ADMIN: STATS ===== */
+app.get("/admin/stats", (req, res) => {
+  const adminKey = req.headers["x-admin-key"];
+
+  if (adminKey !== process.env.ADMIN_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const users = getUsers();
+
+  const stats = {
+    totalUsers: users.length,
+    verifiedUsers: users.filter(u => u.verified).length,
+    proUsers: users.filter(u => u.plan === "pro").length,
+    freeUsers: users.filter(u => u.plan === "free").length
+  };
+
+  res.json(stats);
+});
 
 /* ================= START ================= */
 app.listen(PORT, () => {
