@@ -24,6 +24,19 @@ function saveUsers(users) {
   fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
 
+// =======================
+// ADMIN MIDDLEWARE
+// =======================
+function requireAdmin(req, res, next) {
+  const key = req.headers["x-admin-key"];
+
+  if (key !== process.env.ADMIN_KEY) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  next();
+}
+
 /* ================= MIDDLEWARE ================= */
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
