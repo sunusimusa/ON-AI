@@ -1,165 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Tele Image AI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f6f9;
-    }
-
-    .box {
+      padding: 20px;
       max-width: 600px;
-      margin: 30px auto;
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
+      margin: auto;
     }
 
-    input, button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    input {
+      flex: 1;
+      padding: 8px;
+      font-size: 16px;
     }
 
     button {
-      background: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 14px;
       cursor: pointer;
     }
 
-    button:disabled {
-      background: gray;
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
     }
 
-    #resultImage {
+    img {
+      margin-top: 15px;
       max-width: 100%;
       display: none;
-      margin-top: 10px;
       border-radius: 8px;
     }
 
-    .status {
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
       margin-top: 10px;
-      font-size: 14px;
     }
   </style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2>🖼️ Tele Image AI</h2>
+<h2>Login</h2>
 
-  <!-- AUTH -->
-  <div id="authBox">
-    <input id="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-
-    <button onclick="register()">Register</button>
-    <button onclick="login()">Login</button>
-
-    <p id="authStatus" class="status"></p>
-  </div>
-
-  <hr>
-
-  <!-- IMAGE GENERATOR -->
-  <div id="appBox" style="display:none;">
-    <p id="userStatus" class="status"></p>
-
-    <input id="prompt" placeholder="Describe the image you want">
-    <button onclick="generateImage()">Generate Image</button>
-
-    <img id="resultImage">
-
-    <p id="genStatus" class="status"></p>
-
-    <button onclick="logout()">Logout</button>
-  </div>
+<div class="row">
+  <input id="prompt" placeholder="Describe image (e.g. a dog wearing glasses)" />
+  <button onclick="generateImage()">Generate</button>
 </div>
 
+<div class="actions">
+  <button onclick="verifyAccount()">Verify Account</button>
+  <button onclick="watchAd()">Watch Ad (+1 Image)</button>
+  <button onclick="upgradePro()">Upgrade to PRO 🚀</button>
+</div>
+
+<p id="status"></p>
+
+<img id="resultImage" />
+
+<p>
+  Ba ka da account?
+  <a href="/register.html">Create account</a>
+</p>
+
 <script>
-/* ================= AUTH ================= */
-
-function saveSession(email, plan) {
-  localStorage.setItem("email", email);
-  localStorage.setItem("plan", plan);
-}
-
-function getEmail() {
-  return localStorage.getItem("email");
-}
-
-function logout() {
-  localStorage.clear();
-  location.reload();
-}
-
-async function register() {
-  const email = email.value;
-  const password = password.value;
-
-  const res = await fetch("/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password })
-  });
-
-  const data = await res.json();
-  document.getElementById("authStatus").innerText =
-    data.success ? "✅ Registered successfully" : data.error;
-}
-
-async function login() {
-  const emailVal = email.value;
-  const passwordVal = password.value;
-
-  const res = await fetch("/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: emailVal, password: passwordVal })
-  });
-
-  const data = await res.json();
-
-  if (data.success) {
-    saveSession(data.email, data.plan);
-    showApp();
-  } else {
-    document.getElementById("authStatus").innerText = data.error;
-  }
-}
-
-/* ================= APP ================= */
-
-function showApp() {
-  document.getElementById("authBox").style.display = "none";
-  document.getElementById("appBox").style.display = "block";
-
-  const plan = localStorage.getItem("plan");
-  document.getElementById("userStatus").innerText =
-    plan === "pro"
-      ? "🌟 PRO user – Unlimited images"
-      : "🆓 Free user – 5 images per day";
-}
-
+/* ===================== GENERATE ===================== */
 async function generateImage() {
   const prompt = document.getElementById("prompt").value;
-  const email = getEmail();
+  const email = localStorage.getItem("email");
 
-  if (!prompt) {
-    alert("Enter image description");
+  if (!email) {
+    alert("Please login first");
     return;
   }
 
-  document.getElementById("genStatus").innerText = "⏳ Generating...";
-
+  document.getElementById("status").innerText = "🎨 Generating image...";
+  
   const res = await fetch("/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -169,20 +101,69 @@ async function generateImage() {
   const data = await res.json();
 
   if (data.error) {
-    document.getElementById("genStatus").innerText = "❌ " + data.error;
+    document.getElementById("status").innerText = "❌ " + data.error;
     return;
   }
 
-  document.getElementById("resultImage").src = data.image;
-  document.getElementById("resultImage").style.display = "block";
-  document.getElementById("genStatus").innerText =
-    "✅ Done. Remaining: " + data.remaining;
+  const img = document.getElementById("resultImage");
+  img.src = data.image;
+  img.style.display = "block";
+
+  document.getElementById("status").innerText =
+    "✅ Generated! Remaining: " + (data.remaining ?? "∞");
 }
 
-/* ================= AUTO LOGIN ================= */
+/* ===================== VERIFY ===================== */
+async function verifyAccount() {
+  const email = localStorage.getItem("email");
+  if (!email) return alert("Please login first");
 
-if (getEmail()) {
-  showApp();
+  const res = await fetch("/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+
+  const data = await res.json();
+  alert(data.success ? "✅ Account verified" : data.error);
+}
+
+/* ===================== WATCH AD ===================== */
+async function watchAd() {
+  const email = localStorage.getItem("email");
+  if (!email) return alert("Please login first");
+
+  document.getElementById("status").innerText = "📺 Watching ad...";
+
+  const res = await fetch("/watch-ad", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+
+  const data = await res.json();
+
+  if (data.error) {
+    document.getElementById("status").innerText = "❌ " + data.error;
+  } else {
+    document.getElementById("status").innerText =
+      "✅ Ad watched! You got +1 image";
+  }
+}
+
+/* ===================== UPGRADE ===================== */
+async function upgradePro() {
+  const email = localStorage.getItem("email");
+  if (!email) return alert("Please login first");
+
+  const res = await fetch("/upgrade", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+
+  const data = await res.json();
+  alert(data.success ? "🎉 You are now PRO!" : data.error);
 }
 </script>
 
