@@ -9,7 +9,7 @@ const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const API_URL = "https://tele-tech-ai.onrender.com/generate";
 
 // Start bot
-const bot = new TelegramBot(TOKEN, { polling: true });
+const bot = new TelegramBot(TOKEN, { polling: false });
 
 bot.onText(/\/start/, (msg) => {
   bot.sendMessage(
