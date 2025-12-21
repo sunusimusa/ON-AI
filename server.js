@@ -6,10 +6,13 @@ const app = express();
 const PORT = process.env.PORT || 10000;
 
 /* ================= STORAGE ================= */
-const USERS_FILE = path.join(__dirname, "data", "users.json");
+const DATA_DIR = path.join(__dirname, "data");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
+
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+if (!fs.existsSync(USERS_FILE)) fs.writeFileSync(USERS_FILE, "[]");
 
 function getUsers() {
-  if (!fs.existsSync(USERS_FILE)) return [];
   return JSON.parse(fs.readFileSync(USERS_FILE, "utf8"));
 }
 
@@ -21,73 +24,97 @@ function saveUsers(users) {
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-/* ================= HOME ================= */
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+/* ================= PAGES ================= */
+app.get("/", (req, res) =>
+  res.sendFile(path.join(__dirname, "public", "index.html"))
+);
 
 /* ================= IMAGE GENERATE ================= */
 app.post("/generate", (req, res) => {
-  const { email, prompt } = req.body;
+  const { prompt, email = "guest" } = req.body;
   if (!prompt) return res.json({ error: "Prompt required" });
 
+  const today = new Date().toISOString().slice(0, 10);
   let users = getUsers();
-
-  // auto-create user (no login stress)
   let user = users.find(u => u.email === email);
 
   if (!user) {
     user = {
-      email: email || "guest",
+      email,
+      plan: "free",
       dailyCount: 0,
-      lastUsed: new Date().toISOString().slice(0, 10),
-      bonus: 0
+      lastUsed: today
     };
     users.push(user);
   }
 
-  const today = new Date().toISOString().slice(0, 10);
   if (user.lastUsed !== today) {
     user.dailyCount = 0;
-    user.bonus = 0;
     user.lastUsed = today;
   }
 
-  const LIMIT = 3;
-  if (user.dailyCount >= LIMIT + user.bonus) {
+  if (user.plan === "free" && user.dailyCount >= 3) {
     return res.json({
-      error: "Daily limit reached. Watch ad to continue."
+      error: "Free limit reached. Watch ad or upgrade to PRO."
     });
   }
-
-  user.dailyCount += 1;
-  saveUsers(users);
 
   const imageUrl =
     "https://image.pollinations.ai/prompt/" +
     encodeURIComponent(prompt);
 
-  res.json({
-    success: true,
-    image: imageUrl,
-    remaining: LIMIT + user.bonus - user.dailyCount
-  });
-});
-
-/* ================= WATCH AD (+1 IMAGE) ================= */
-app.post("/watch-ad", (req, res) => {
-  const { email } = req.body;
-  let users = getUsers();
-
-  let user = users.find(u => u.email === email);
-  if (!user) return res.json({ error: "User not found" });
-
-  user.bonus += 1;
+  user.dailyCount += 1;
   saveUsers(users);
 
   res.json({
-    success: true,
-    message: "+1 image added"
+    image: imageUrl,
+    remaining:
+      user.plan === "free" ? 3 - user.dailyCount : "unlimited"
+  });
+});
+
+/* ================= WATCH AD ================= */
+app.post("/watch-ad", (req, res) => {
+  const { email = "guest" } = req.body;
+  const users = getUsers();
+  const user = users.find(u => u.email === email);
+
+  if (!user) return res.json({ error: "User not found" });
+
+  user.dailyCount = Math.max(user.dailyCount - 1, 0);
+  saveUsers(users);
+
+  res.json({ success: true, message: "+1 image added" });
+});
+
+/* ================= PAY BEFORE DOWNLOAD ================= */
+app.post("/unlock-pro", (req, res) => {
+  const { email = "guest" } = req.body;
+  const users = getUsers();
+  let user = users.find(u => u.email === email);
+
+  if (!user) {
+    user = {
+      email,
+      plan: "pro",
+      dailyCount: 0,
+      lastUsed: new Date().toISOString().slice(0, 10)
+    };
+    users.push(user);
+  } else {
+    user.plan = "pro";
+  }
+
+  saveUsers(users);
+  res.json({ success: true, plan: "pro" });
+});
+
+/* ================= ADMIN STATS ================= */
+app.get("/admin/stats", (req, res) => {
+  const users = getUsers();
+  res.json({
+    users: users.length,
+    pro: users.filter(u => u.plan === "pro").length
   });
 });
 
