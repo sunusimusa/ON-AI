@@ -3,91 +3,175 @@
 <head>
   <meta charset="UTF-8" />
   <title>Tele Image AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
+    :root {
+      --bg: #f4f6f9;
+      --card: #ffffff;
+      --text: #111;
+      --primary: #4f46e5;
+      --danger: #dc2626;
+    }
+
+    body.dark {
+      --bg: #0f172a;
+      --card: #020617;
+      --text: #e5e7eb;
+    }
+
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 20px;
+      transition: 0.3s;
+    }
+
+    .card {
+      background: var(--card);
+      width: 100%;
       max-width: 600px;
-      margin: auto;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
     }
 
     h2 {
-      margin-bottom: 10px;
+      margin-top: 0;
+      text-align: center;
     }
 
     .row {
       display: flex;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 10px;
+      margin-bottom: 12px;
       flex-wrap: wrap;
     }
 
     input {
       flex: 1;
-      padding: 8px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
       font-size: 14px;
     }
 
     button {
-      padding: 8px 12px;
-      font-size: 14px;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: none;
       cursor: pointer;
+      font-size: 14px;
+      background: var(--primary);
+      color: #fff;
+    }
+
+    button.secondary {
+      background: #64748b;
+    }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     #status {
       margin-top: 10px;
       font-weight: bold;
+      text-align: center;
     }
 
-    #resultImage {
-      margin-top: 15px;
-      max-width: 100%;
+    #loader {
       display: none;
-      border-radius: 6px;
+      text-align: center;
+      margin-top: 10px;
     }
 
-    .link {
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #ddd;
+      border-top: 4px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    img {
+      max-width: 100%;
+      border-radius: 10px;
       margin-top: 15px;
+      display: none;
+    }
+
+    .footer {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 14px;
+    }
+
+    .toggle {
+      text-align: right;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 
 <body>
 
-  <h2>Tele Image AI</h2>
+  <div class="card">
+    <div class="toggle">
+      <button class="secondary" onclick="toggleMode()">🌙 / ☀️</button>
+    </div>
 
-  <!-- PROMPT -->
-  <div class="row">
-    <input
-      id="prompt"
-      placeholder="Describe image (e.g. a dog wearing glasses)"
-    />
-    <button onclick="generateImage()">Generate</button>
-  </div>
+    <h2>🎨 Tele Image AI</h2>
 
-  <!-- ACTION BUTTONS -->
-  <div class="row">
-    <button onclick="verifyAccount()">Verify Account</button>
-    <button onclick="watchAd()">Watch Ad (+1 Image)</button>
-    <button onclick="upgradePro()">Upgrade to PRO 🚀</button>
-  </div>
+    <!-- PROMPT -->
+    <div class="row">
+      <input id="prompt" placeholder="Describe image (e.g. a cat astronaut)" />
+      <button onclick="generateImage()">Generate</button>
+    </div>
 
-  <!-- STATUS -->
-  <div id="status"></div>
+    <!-- ACTIONS -->
+    <div class="row">
+      <button class="secondary" onclick="verifyAccount()">Verify</button>
+      <button class="secondary" onclick="watchAd()">Watch Ad +1</button>
+      <button class="danger" onclick="upgradePro()">Upgrade PRO 🚀</button>
+    </div>
 
-  <!-- RESULT IMAGE -->
-  <img id="resultImage" />
+    <!-- STATUS -->
+    <div id="status"></div>
 
-  <div class="link">
-    Ba ka da account?
-    <a href="/register.html">Create account</a>
+    <!-- LOADER -->
+    <div id="loader">
+      <div class="spinner"></div>
+      <p>Generating image...</p>
+    </div>
+
+    <!-- IMAGE -->
+    <img id="resultImage" />
+
+    <div class="footer">
+      Ba ka da account? <a href="/register.html">Create account</a>
+    </div>
   </div>
 
 <script>
-/* =========================
-   HELPERS
-========================= */
+/* ================= HELPERS ================= */
 function getEmail() {
   const email = localStorage.getItem("email");
   if (!email) {
@@ -97,53 +181,49 @@ function getEmail() {
   return email;
 }
 
-/* =========================
-   GENERATE IMAGE
-========================= */
+function toggleMode() {
+  document.body.classList.toggle("dark");
+}
+
+/* ================= GENERATE IMAGE ================= */
 async function generateImage() {
-  const prompt = document.getElementById("prompt").value;
+  const prompt = document.getElementById("prompt").value.trim();
   const status = document.getElementById("status");
   const img = document.getElementById("resultImage");
+  const loader = document.getElementById("loader");
+
+  if (!prompt) {
+    alert("Enter image description");
+    return;
+  }
 
   const email = getEmail();
   if (!email) return;
 
-  if (!prompt) {
-    alert("Please enter image description");
+  status.innerText = "";
+  img.style.display = "none";
+  loader.style.display = "block";
+
+  const res = await fetch("/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, prompt })
+  });
+
+  const data = await res.json();
+  loader.style.display = "none";
+
+  if (data.error) {
+    status.innerText = "❌ " + data.error;
     return;
   }
 
-  status.innerText = "🎨 Generating image...";
-  img.style.display = "none";
-
-  try {
-    const res = await fetch("/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, prompt })
-    });
-
-    const data = await res.json();
-
-    if (data.error) {
-      status.innerText = "❌ " + data.error;
-      return;
-    }
-
-    img.src = data.image;
-    img.style.display = "block";
-    status.innerText =
-      "✅ Image generated. Remaining: " +
-      (data.remaining === null ? "unlimited" : data.remaining);
-
-  } catch (err) {
-    status.innerText = "❌ Server error, try again";
-  }
+  img.src = data.image;
+  img.style.display = "block";
+  status.innerText = "✅ Image generated. Remaining: " + data.remaining;
 }
 
-/* =========================
-   VERIFY ACCOUNT
-========================= */
+/* ================= VERIFY ================= */
 async function verifyAccount() {
   const email = getEmail();
   if (!email) return;
@@ -155,17 +235,10 @@ async function verifyAccount() {
   });
 
   const data = await res.json();
-
-  if (data.success) {
-    alert("✅ Account verified!");
-  } else {
-    alert(data.error || "Verification failed");
-  }
+  alert(data.success ? "✅ Account verified!" : data.error);
 }
 
-/* =========================
-   WATCH AD
-========================= */
+/* ================= WATCH AD ================= */
 async function watchAd() {
   const email = getEmail();
   if (!email) return;
@@ -177,17 +250,10 @@ async function watchAd() {
   });
 
   const data = await res.json();
-
-  if (data.error) {
-    alert("❌ " + data.error);
-  } else {
-    alert("✅ Ad watched! +1 image added");
-  }
+  alert(data.error ? "❌ " + data.error : "✅ +1 image added");
 }
 
-/* =========================
-   UPGRADE TO PRO
-========================= */
+/* ================= UPGRADE ================= */
 async function upgradePro() {
   const email = getEmail();
   if (!email) return;
@@ -199,12 +265,7 @@ async function upgradePro() {
   });
 
   const data = await res.json();
-
-  if (data.success) {
-    alert("🎉 You are now PRO! Unlimited images unlocked.");
-  } else {
-    alert(data.error || "Upgrade failed");
-  }
+  alert(data.success ? "🎉 You are now PRO!" : data.error);
 }
 </script>
 
