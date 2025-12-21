@@ -2,109 +2,57 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Dashboard – Tele Image AI</title>
-
+  <title>Admin Dashboard</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-    }
-
-    h2 {
-      margin-bottom: 5px;
-    }
-
-    input {
-      padding: 8px;
-      width: 300px;
-    }
-
-    button {
-      padding: 8px 12px;
-      cursor: pointer;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-      font-size: 14px;
-    }
-
-    th {
-      background: #f4f4f4;
-    }
-
-    .stats {
-      margin-top: 10px;
-      font-weight: bold;
-    }
+    body { font-family: Arial; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px; }
+    th { background: #eee; }
+    button { padding: 4px 8px; }
   </style>
 </head>
-
 <body>
 
 <h2>📊 Admin Dashboard</h2>
 
-<div>
-  <input id="adminKey" placeholder="Enter ADMIN_KEY" />
-  <button onclick="loadData()">Load</button>
-</div>
+<input id="key" placeholder="ADMIN KEY" />
+<button onclick="loadData()">Load</button>
 
-<div class="stats" id="stats"></div>
+<h3>Stats</h3>
+<div id="stats"></div>
 
-<h3>👥 Users</h3>
-
+<h3>Users</h3>
 <table>
   <thead>
     <tr>
       <th>Email</th>
       <th>Plan</th>
       <th>Verified</th>
-      <th>Daily Count</th>
+      <th>Daily</th>
+      <th>Action</th>
     </tr>
   </thead>
-  <tbody id="usersTable"></tbody>
+  <tbody id="users"></tbody>
 </table>
 
 <script>
 async function loadData() {
-  const key = document.getElementById("adminKey").value;
-  if (!key) {
-    alert("Enter ADMIN_KEY");
-    return;
-  }
+  const key = document.getElementById("key").value;
 
-  // ===== STATS =====
-  const statsRes = await fetch("/admin/stats", {
-    headers: { "x-admin-key": key }
-  });
+  const headers = { "x-admin-key": key };
 
-  const statsData = await statsRes.json();
-
-  if (statsData.error) {
-    alert(statsData.error);
-    return;
-  }
+  // stats
+  const statsRes = await fetch("/admin/stats", { headers });
+  const stats = await statsRes.json();
 
   document.getElementById("stats").innerText =
-    `Users: ${statsData.totalUsers} | PRO: ${statsData.proUsers} | Verified: ${statsData.verifiedUsers}`;
+    `Users: ${stats.totalUsers}, PRO: ${stats.proUsers}, Images: ${stats.totalImages}`;
 
-  // ===== USERS =====
-  const usersRes = await fetch("/admin/users", {
-    headers: { "x-admin-key": key }
-  });
-
+  // users
+  const usersRes = await fetch("/admin/users", { headers });
   const users = await usersRes.json();
-  const tbody = document.getElementById("usersTable");
+
+  const tbody = document.getElementById("users");
   tbody.innerHTML = "";
 
   users.forEach(u => {
@@ -112,11 +60,30 @@ async function loadData() {
     tr.innerHTML = `
       <td>${u.email}</td>
       <td>${u.plan}</td>
-      <td>${u.verified ? "✅" : "❌"}</td>
-      <td>${u.dailyCount}</td>
+      <td>${u.verified}</td>
+      <td>${u.dailyCount || 0}</td>
+      <td>
+        <button onclick="setPlan('${u.email}', 'pro')">PRO</button>
+        <button onclick="setPlan('${u.email}', 'free')">FREE</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
+}
+
+async function setPlan(email, plan) {
+  const key = document.getElementById("key").value;
+
+  await fetch("/admin/set-plan", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-admin-key": key
+    },
+    body: JSON.stringify({ email, plan })
+  });
+
+  loadData();
 }
 </script>
 
