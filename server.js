@@ -58,48 +58,50 @@ app.get("/app", (req, res) =>
 /* ================= REGISTER ================= */
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password)
+  if (!email || !password) {
     return res.json({ success: false, error: "Missing data" });
-
-  const users = getUsers();
-  if (users.find(u => u.email === email))
-    return res.json({ success: false, error: "User already exists" });
+  }
 
   const hash = await bcrypt.hash(password, 10);
 
-  users.push({
-    email,
-    password: hash,
-    plan: "free",
-    verified: false,
-    dailyCount: 0,
-    lastUsed: new Date().toISOString().slice(0, 10)
-  });
-
-  saveUsers(users);
-  res.json({ success: true });
+  db.run(
+    `INSERT INTO users (email, password, plan, verified, dailyCount, lastUsed)
+     VALUES (?, ?, 'free', 0, 0, ?)`,
+    [email, hash, new Date().toISOString().slice(0, 10)],
+    err => {
+      if (err) {
+        return res.json({ success: false, error: "User exists" });
+      }
+      res.json({ success: true });
+    }
+  );
 });
 
 /* ================= LOGIN ================= */
-app.post("/login", async (req, res) => {
+app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
-  const users = getUsers();
-  const user = users.find(u => u.email === email);
+  db.get(
+    "SELECT * FROM users WHERE email = ?",
+    [email],
+    async (err, user) => {
+      if (!user) {
+        return res.json({ success: false, error: "User not found" });
+      }
 
-  if (!user)
-    return res.json({ success: false, error: "User not found" });
+      const ok = await bcrypt.compare(password, user.password);
+      if (!ok) {
+        return res.json({ success: false, error: "Wrong password" });
+      }
 
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok)
-    return res.json({ success: false, error: "Wrong password" });
-
-  res.json({
-    success: true,
-    email: user.email,
-    plan: user.plan,
-    verified: user.verified
-  });
+      res.json({
+        success: true,
+        email: user.email,
+        plan: user.plan,
+        verified: !!user.verified
+      });
+    }
+  );
 });
 
 /* ================= VERIFY ================= */
