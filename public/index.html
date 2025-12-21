@@ -8,13 +8,12 @@
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
-      max-width: 600px;
+      max-width: 700px;
       margin: auto;
-      background: #fafafa;
     }
 
     h2 {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .row {
@@ -34,13 +33,6 @@
       padding: 10px 14px;
       font-size: 14px;
       cursor: pointer;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      background: #fff;
-    }
-
-    button:hover {
-      background: #f0f0f0;
     }
 
     #status {
@@ -53,12 +45,10 @@
       max-width: 100%;
       display: none;
       border-radius: 8px;
-      border: 1px solid #ddd;
     }
 
     .link {
       margin-top: 15px;
-      font-size: 14px;
     }
   </style>
 </head>
@@ -83,7 +73,7 @@
   <!-- STATUS -->
   <div id="status"></div>
 
-  <!-- RESULT -->
+  <!-- IMAGE RESULT -->
   <img id="resultImage" />
 
   <div class="link">
@@ -107,17 +97,17 @@ function getEmail() {
    GENERATE IMAGE
 ========================= */
 async function generateImage() {
-  const prompt = document.getElementById("prompt").value.trim();
+  const prompt = document.getElementById("prompt").value;
   const status = document.getElementById("status");
   const img = document.getElementById("resultImage");
+
+  const email = getEmail();
+  if (!email) return;
 
   if (!prompt) {
     alert("Please enter image description");
     return;
   }
-
-  const email = getEmail();
-  if (!email) return;
 
   status.innerText = "🎨 Generating image...";
   img.style.display = "none";
@@ -138,17 +128,14 @@ async function generateImage() {
 
     img.src = data.image;
     img.style.display = "block";
-    status.innerText =
-      "✅ Image generated. Remaining: " +
-      (data.remaining === undefined ? "unlimited" : data.remaining);
-
+    status.innerText = "✅ Image generated. Remaining: " + data.remaining;
   } catch (err) {
-    status.innerText = "❌ Network error";
+    status.innerText = "❌ Server error";
   }
 }
 
 /* =========================
-   VERIFY
+   VERIFY ACCOUNT
 ========================= */
 async function verifyAccount() {
   const email = getEmail();
