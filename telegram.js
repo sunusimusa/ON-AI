@@ -1,29 +1,36 @@
 const TelegramBot = require("node-telegram-bot-api");
 const fetch = require("node-fetch");
 
-// 🔐 Telegram Bot Token
+// 🔐 Token daga Render ENV
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
-// 🌍 API URL na Tele-tech-AI
+// 🌐 API na Tele-tech-AI
 const API_URL = "https://tele-tech-ai.onrender.com/generate";
 
-// ✅ START BOT (POLLING ƊAYA KAWAI)
+// 🛑 Idan babu token, kada a fara bot
+if (!TOKEN) {
+  console.error("❌ TELEGRAM_BOT_TOKEN not set");
+  process.exit(1);
+}
+
+// ✅ FARA BOT (POLLING KADAI – SAU 1)
 const bot = new TelegramBot(TOKEN, {
   polling: {
-    interval: 300,
+    interval: 1000,
     autoStart: true
   }
 });
 
-// 👋 /start command
-bot.onText(/\/start/, (msg) => {
+// /start
+bot.onText(/^\/start$/, (msg) => {
   bot.sendMessage(
     msg.chat.id,
-    "👋 Welcome to Tele Image AI!\n\n🎨 Send any text prompt to generate an image."
+    "👋 Welcome to *Tele Image AI*\n\n🎨 Aiko da rubutu (prompt) domin a ƙirƙiri hoto.\n\nMisali:\n`A realistic lion wearing a crown`",
+    { parse_mode: "Markdown" }
   );
 });
 
-// 🎨 Receive prompt
+// Karɓar prompt
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const prompt = msg.text;
