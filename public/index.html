@@ -9,6 +9,7 @@
 
   <!-- Adsterra (SAFE – Non-adult) -->
   <script src="https://pl28312948.effectivegatecpm.com/4e/8f/53/4e8f53fd8f471d4cfcc6003e48ffb3d3.js"></script>
+  <!-- ⚠️ LURA: ka bar link ɗin Adsterra naka na gaskiya -->
 
   <style>
     body {
@@ -17,26 +18,21 @@
       text-align: center;
       background: #f9f9f9;
     }
-
     input {
       padding: 10px;
       width: 80%;
-      max-width: 300px;
+      max-width: 320px;
     }
-
     button {
       padding: 10px 15px;
       margin-top: 10px;
       cursor: pointer;
     }
-
     img {
-      max-width: 300px;
+      max-width: 320px;
       margin-top: 15px;
       display: none;
-      border-radius: 8px;
     }
-
     #downloadBtn {
       display: none;
     }
@@ -58,16 +54,17 @@
 
   <br>
 
-  <button id="payBtn" onclick="pay()" style="display:none;">
+  <button id="payBtn" style="display:none;" onclick="pay()">
     💳 Pay ₦200 to Download
   </button>
 
   <br>
 
-  <button id="downloadBtn">
+  <button id="downloadBtn" onclick="downloadImage()">
     ⬇️ Download Image
   </button>
 
+  <!-- ================= SCRIPT ================= -->
   <script>
     let lastImageUrl = "";
     let paid = false;
@@ -75,14 +72,14 @@
     async function generateImage() {
       const prompt = document.getElementById("prompt").value;
       if (!prompt) {
-        alert("Please enter a prompt");
+        alert("Enter prompt");
         return;
       }
 
-      document.getElementById("status").innerText = "⏳ Generating image...";
+      document.getElementById("status").innerText = "⏳ Generating...";
       document.getElementById("result").style.display = "none";
-      document.getElementById("downloadBtn").style.display = "none";
       document.getElementById("payBtn").style.display = "none";
+      document.getElementById("downloadBtn").style.display = "none";
       paid = false;
 
       const res = await fetch("/generate", {
@@ -93,6 +90,12 @@
 
       const data = await res.json();
 
+      if (!data.image) {
+        document.getElementById("status").innerText =
+          "❌ Failed to generate image";
+        return;
+      }
+
       lastImageUrl = data.image;
 
       const img = document.getElementById("result");
@@ -100,21 +103,22 @@
       img.style.display = "block";
 
       document.getElementById("status").innerText =
-        "✅ Image ready. Pay to download.";
+        "🔒 Pay ₦200 to download image";
 
       document.getElementById("payBtn").style.display = "inline-block";
     }
 
+    // ===== PAYSTACK =====
     function pay() {
       let handler = PaystackPop.setup({
-        key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba", // 🔴 SA PUBLIC KEY DINKA
+        key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba", // ⚠️ PUBLIC KEY DINKA
         email: "customer@teleimage.ai",
         amount: 200 * 100,
         currency: "NGN",
         callback: function () {
           paid = true;
           document.getElementById("status").innerText =
-            "✅ Payment successful. Download unlocked!";
+            "✅ Payment successful. Download unlocked";
           document.getElementById("downloadBtn").style.display =
             "inline-block";
         },
@@ -125,7 +129,8 @@
       handler.openIframe();
     }
 
-    document.getElementById("downloadBtn").onclick = async () => {
+    // ===== DOWNLOAD (ANDROID + PC) =====
+    async function downloadImage() {
       if (!paid || !lastImageUrl) return;
 
       const response = await fetch(lastImageUrl);
@@ -137,9 +142,10 @@
       a.download = "tele-image-ai.png";
       document.body.appendChild(a);
       a.click();
+
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-    };
+    }
   </script>
 
 </body>
