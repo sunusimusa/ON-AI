@@ -26,6 +26,25 @@ app.post("/generate", (req, res) => {
 
   res.json({ image: imageUrl });
 });
+// ================= LIMIT (IN-MEMORY) =================
+let dailyViews = {}; // IP based
+
+function canGenerate(ip) {
+  if (!dailyViews[ip]) {
+    dailyViews[ip] = { count: 0, date: new Date().toDateString() };
+  }
+
+  // reset daily
+  if (dailyViews[ip].date !== new Date().toDateString()) {
+    dailyViews[ip] = { count: 0, date: new Date().toDateString() };
+  }
+
+  return dailyViews[ip].count < 3; // FREE = 3 images
+}
+
+function increaseCount(ip) {
+  dailyViews[ip].count++;
+}
 
 app.listen(PORT, () => {
   console.log("✅ Server running on port " + PORT);
