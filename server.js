@@ -36,6 +36,30 @@ app.post("/generate", (req, res) => {
 
   res.json({ image: imageUrl });
 });
+app.post("/pay", async (req, res) => {
+  const { email, amount } = req.body;
+
+  try {
+    const response = await axios.post(
+      "https://api.paystack.co/transaction/initialize",
+      {
+        email,
+        amount: amount * 100 // Paystack uses kobo
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    res.json({ success: true, data: response.data.data });
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ success: false });
+  }
+});
 // ================= LIMIT (IN-MEMORY) =================
 let dailyViews = {}; // IP based
 
