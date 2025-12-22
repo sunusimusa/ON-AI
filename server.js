@@ -15,10 +15,20 @@ app.get("/", (req, res) => {
 // IMAGE GENERATE (Pollinations – FREE)
 app.post("/generate", (req, res) => {
   const { prompt } = req.body;
+  const ip = req.ip;
 
   if (!prompt) {
     return res.json({ error: "Prompt required" });
   }
+
+  if (!canGenerate(ip)) {
+    return res.json({
+      limit: true,
+      message: "Free limit reached. Watch ad or upgrade."
+    });
+  }
+
+  increaseCount(ip);
 
   const imageUrl =
     "https://image.pollinations.ai/prompt/" +
@@ -45,7 +55,20 @@ function canGenerate(ip) {
 function increaseCount(ip) {
   dailyViews[ip].count++;
 }
+// ================= AD WATCH =================
+app.post("/watch-ad", (req, res) => {
+  const ip = req.ip;
 
+  // allow 1 extra image after ad
+  if (dailyViews[ip]) {
+    dailyViews[ip].count = Math.max(
+      dailyViews[ip].count - 1,
+      0
+    );
+  }
+
+  res.json({ success: true });
+});
 app.listen(PORT, () => {
   console.log("✅ Server running on port " + PORT);
 });
