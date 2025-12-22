@@ -118,31 +118,27 @@
     }
 
     // 💳 PAYSTACK PAYMENT
-    function pay() {
-      const handler = PaystackPop.setup({
-        key: "pk_test_xxxxxxxxxxxxxxx", 
-        // ⬆️ SA PUBLIC KEY NAKA NAN
+function pay() {
+  let handler = PaystackPop.setup({
+    key: 'pk_test_XXXXXXX', // 🔴 SAKA PUBLIC KEY DINKA ANAN
+    email: 'customer@email.com',
+    amount: 200 * 100, // ₦200
+    currency: 'NGN',
+    callback: function(response) {
+      alert('✅ Payment successful!');
+      unlocked = true;
 
-        email: "customer@teleimage.ai",
-        amount: 200 * 100, // ₦200
-        currency: "NGN",
-
-        callback: function(response) {
-          paid = true;
-          document.getElementById("status").innerText =
-            "✅ Payment successful!";
-          document.getElementById("payBtn").style.display = "none";
-          document.getElementById("downloadBtn").style.display = "inline-block";
-        },
-
-        onClose: function() {
-          alert("Payment cancelled");
-        }
-      });
-
-      handler.openIframe();
+      document.getElementById("downloadBtn").style.display = "inline-block";
+      document.getElementById("payBtn").style.display = "none";
+      document.getElementById("status").innerText = "🔓 Download unlocked";
+    },
+    onClose: function() {
+      alert('❌ Payment cancelled');
     }
+  });
 
+  handler.openIframe();
+}
     // ⬇️ DOWNLOAD (ANDROID + PC)
     document.getElementById("downloadBtn").onclick = async () => {
       if (!paid || !lastImageUrl) return;
