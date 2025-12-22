@@ -3,99 +3,113 @@
 <head>
   <meta charset="UTF-8" />
   <title>Tele Image AI</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f6f7f9;
-      text-align: center;
       padding: 20px;
-    }
-    input {
-      width: 70%;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-    button {
-      padding: 10px 15px;
-      cursor: pointer;
+      max-width: 400px;
+      margin: auto;
+      text-align: center;
     }
     img {
       max-width: 300px;
       margin-top: 15px;
-      border-radius: 8px;
+      display: none;
+    }
+    button, a {
+      margin-top: 10px;
+      padding: 10px;
+      display: block;
+      width: 100%;
+      text-decoration: none;
     }
     #downloadBtn {
-      margin-top: 10px;
-      display: none;
+      pointer-events: none;
+      opacity: 0.5;
     }
   </style>
 </head>
+
 <body>
 
-<h2>🖼️ Tele Image AI (FREE)</h2>
+  <h2>🍔 Tele Image AI (FREE)</h2>
 
-<input id="prompt" placeholder="Describe image..." />
-<br>
-<button onclick="generate()">Generate</button>
+  <!-- PROMPT -->
+  <input id="prompt" placeholder="Describe image..." />
 
-<p id="status"></p>
+  <!-- GENERATE -->
+  <button onclick="generateImage()">Generate</button>
 
-<img id="result" />
-<br>
+  <!-- STATUS -->
+  <p id="status"></p>
 
-<button id="downloadBtn" disabled>🔒 Watch ad to unlock</button>
+  <!-- IMAGE -->
+  <img id="result" />
 
-<script>
-let freeCount = 0;
-const FREE_LIMIT = 3;
+  <!-- WATCH AD -->
+  <button id="watchAdBtn" style="display:none;" onclick="watchAd()">
+    🔒 Watch ad to unlock
+  </button>
 
-function generate() {
-  if (freeCount >= FREE_LIMIT) {
-    alert("❌ Free limit reached. Watch ad to continue.");
-    return;
-  }
+  <!-- DOWNLOAD -->
+  <a id="downloadBtn" href="#" download>
+    ⬇️ Download
+  </a>
 
-  const prompt = document.getElementById("prompt").value;
-  if (!prompt) return alert("Enter prompt");
+  <!-- ================= SCRIPT ================= -->
+  <script>
+    let lastImageUrl = "";
 
-  fetch("/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt })
-  })
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById("result").src = data.image;
-    document.getElementById("downloadBtn").style.display = "inline-block";
-    document.getElementById("downloadBtn").disabled = true;
-    document.getElementById("downloadBtn").innerText = "🔒 Watch ad to unlock";
+    async function generateImage() {
+      const prompt = document.getElementById("prompt").value;
+      if (!prompt) {
+        alert("Enter prompt");
+        return;
+      }
 
-    freeCount++;
-    setupAdUnlock(data.image);
-  });
-}
+      document.getElementById("status").innerText = "⏳ Generating...";
+      document.getElementById("watchAdBtn").style.display = "none";
+      document.getElementById("downloadBtn").style.pointerEvents = "none";
+      document.getElementById("downloadBtn").style.opacity = "0.5";
 
-function setupAdUnlock(imageUrl) {
-  const btn = document.getElementById("downloadBtn");
+      const res = await fetch("/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+      });
 
-  btn.onclick = () => {
-    alert("📺 Simulating Ad...");
+      const data = await res.json();
 
-    // fake ad delay (replace later with real ad)
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.innerText = "⬇️ Download";
+      lastImageUrl = data.image;
 
-      btn.onclick = () => {
-        const a = document.createElement("a");
-        a.href = imageUrl;
-        a.download = "tele-image.png";
-        a.click();
-      };
-    }, 5000); // 5 seconds ad
-  };
-}
-</script>
+      const img = document.getElementById("result");
+      img.src = data.image;
+      img.style.display = "block";
+
+      document.getElementById("status").innerText =
+        "✅ Image ready (watch ad to download)";
+
+      document.getElementById("watchAdBtn").style.display = "block";
+    }
+
+    function watchAd() {
+      document.getElementById("status").innerText =
+        "📺 Watching ad... please wait";
+
+      // FAKE AD (5 seconds)
+      setTimeout(() => {
+        const dl = document.getElementById("downloadBtn");
+        dl.href = lastImageUrl;
+        dl.style.pointerEvents = "auto";
+        dl.style.opacity = "1";
+
+        document.getElementById("watchAdBtn").style.display = "none";
+        document.getElementById("status").innerText =
+          "✅ Ad completed. You can download now!";
+      }, 5000);
+    }
+  </script>
 
 </body>
 </html>
