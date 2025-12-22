@@ -109,7 +109,24 @@
           "✅ Ad completed. You can download now!";
       }, 5000);
     }
-  </script>
+    
+document.getElementById("watchAdBtn").onclick = () => {
+  document.getElementById("status").innerText =
+    "📺 Watching ad... please wait";
+
+  // fake ad timer (10 seconds)
+  setTimeout(() => {
+    unlocked = true;
+
+    document.getElementById("status").innerText =
+      "✅ Ad watched. Download unlocked";
+
+    const btn = document.getElementById("downloadBtn");
+    btn.style.pointerEvents = "auto";
+    btn.style.opacity = "1";
+  }, 10000);
+};
+</script>
 
 </body>
 </html>
