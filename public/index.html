@@ -3,62 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <title>Tele Image AI</title>
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f7f9;
+      text-align: center;
+      padding: 20px;
+    }
+    input {
+      width: 70%;
+      padding: 10px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+    img {
+      max-width: 300px;
+      margin-top: 15px;
+      border-radius: 8px;
+    }
+    #downloadBtn {
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
 </head>
 <body>
 
-<h2>🎨 Tele Image AI (FREE)</h2>
+<h2>🖼️ Tele Image AI (FREE)</h2>
 
-<input id="prompt" placeholder="Enter prompt..." />
+<input id="prompt" placeholder="Describe image..." />
+<br>
 <button onclick="generate()">Generate</button>
 
 <p id="status"></p>
 
-<img id="result" style="max-width:300px; display:none;" />
+<img id="result" />
+<br>
 
-<br><br>
-
-<button id="downloadBtn" disabled>⬇️ Download</button>
+<button id="downloadBtn" disabled>🔒 Watch ad to unlock</button>
 
 <script>
-let imageUrl = "";
+let freeCount = 0;
+const FREE_LIMIT = 3;
 
-async function generate() {
+function generate() {
+  if (freeCount >= FREE_LIMIT) {
+    alert("❌ Free limit reached. Watch ad to continue.");
+    return;
+  }
+
   const prompt = document.getElementById("prompt").value;
-  document.getElementById("status").innerText = "⏳ Generating...";
+  if (!prompt) return alert("Enter prompt");
 
-  const res = await fetch("/generate", {
+  fetch("/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById("result").src = data.image;
+    document.getElementById("downloadBtn").style.display = "inline-block";
+    document.getElementById("downloadBtn").disabled = true;
+    document.getElementById("downloadBtn").innerText = "🔒 Watch ad to unlock";
+
+    freeCount++;
+    setupAdUnlock(data.image);
   });
-
-  const data = await res.json();
-
-  if (data.image) {
-    imageUrl = data.image;
-    document.getElementById("result").src = imageUrl;
-    document.getElementById("result").style.display = "block";
-    document.getElementById("status").innerText = "✅ Image ready";
-
-    // Lock download
-    const btn = document.getElementById("downloadBtn");
-    btn.disabled = true;
-    btn.innerText = "📢 Watch ad to unlock";
-  }
 }
 
-// AD + UNLOCK DOWNLOAD
-document.getElementById("downloadBtn").onclick = () => {
-  alert("📢 Please watch ad (5 seconds)");
+function setupAdUnlock(imageUrl) {
+  const btn = document.getElementById("downloadBtn");
 
-  setTimeout(() => {
-    const btn = document.getElementById("downloadBtn");
-    btn.disabled = false;
-    btn.innerText = "⬇️ Download";
-    btn.onclick = () => window.open(imageUrl, "_blank");
-  }, 5000);
-};
+  btn.onclick = () => {
+    alert("📺 Simulating Ad...");
+
+    // fake ad delay (replace later with real ad)
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.innerText = "⬇️ Download";
+
+      btn.onclick = () => {
+        const a = document.createElement("a");
+        a.href = imageUrl;
+        a.download = "tele-image.png";
+        a.click();
+      };
+    }, 5000); // 5 seconds ad
+  };
+}
 </script>
 
 </body>
