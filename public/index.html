@@ -109,6 +109,30 @@ function watchAd() {
       "✅ Download unlocked!";
   }, 5000);
 }
+let lastImageUrl = "";
+
+function downloadImage() {
+  if (!lastImageUrl) {
+    alert("No image to download");
+    return;
+  }
+
+  fetch(lastImageUrl)
+    .then(res => res.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "tele-image-ai.png";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    })
+    .catch(() => {
+      alert("Download failed");
+    });
+}
 </script>
    
 </body>
