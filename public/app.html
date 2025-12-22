@@ -31,13 +31,11 @@
 <!-- ✅ SCRIPT DINA NAN -->
 <script>
 let lastImageUrl = "";
-let adWatched = false;
+let unlocked = false;
 
 async function generateImage() {
   const prompt = document.getElementById("prompt").value;
-  if (!prompt) return alert("Enter prompt");
-
-  document.getElementById("status").innerText = "⏳ Generating...";
+  if (!prompt) return alert("Write something");
 
   const res = await fetch("/generate", {
     method: "POST",
@@ -47,38 +45,50 @@ async function generateImage() {
 
   const data = await res.json();
 
+  // FREE LIMIT REACHED
   if (data.limit) {
     document.getElementById("status").innerText =
-      "❌ Free limit reached. Watch ad to unlock.";
-    document.getElementById("watchAdBtn").style.display = "block";
+      "❌ Free limit reached. Watch ad to unlock download";
+    document.getElementById("watchAdBtn").style.display = "inline-block";
     return;
   }
 
+  // IMAGE OK
   lastImageUrl = data.image;
   document.getElementById("result").src = data.image;
   document.getElementById("status").innerText = "✅ Image ready";
-  document.getElementById("downloadBtn").disabled = true;
-  document.getElementById("watchAdBtn").style.display = "block";
+
+  // Lock download
+  lockDownload();
 }
 
-function watchAd() {
-  alert("📢 Watching ad (5 seconds)...");
-  document.getElementById("status").innerText = "📺 Ad playing...";
+// LOCK DOWNLOAD
+function lockDownload() {
+  unlocked = false;
+  const btn = document.getElementById("downloadBtn");
+  btn.style.pointerEvents = "none";
+  btn.style.opacity = "0.5";
+}
+
+// WATCH AD (FAKE AD 5 SECONDS)
+document.getElementById("watchAdBtn").onclick = () => {
+  alert("📢 Watching ad… please wait 5 seconds");
 
   setTimeout(() => {
-    adWatched = true;
-    document.getElementById("status").innerText = "✅ Ad watched. Download unlocked.";
-    document.getElementById("downloadBtn").disabled = false;
+    unlockDownload();
+    document.getElementById("status").innerText =
+      "✅ Ad watched. Download unlocked!";
+    document.getElementById("watchAdBtn").style.display = "none";
   }, 5000);
-}
+};
 
-function downloadImage() {
-  if (!adWatched) return alert("Watch ad first");
-
-  const a = document.createElement("a");
-  a.href = lastImageUrl;
-  a.download = "tele-image-ai.png";
-  a.click();
+// UNLOCK DOWNLOAD
+function unlockDownload() {
+  unlocked = true;
+  const btn = document.getElementById("downloadBtn");
+  btn.href = lastImageUrl;
+  btn.style.pointerEvents = "auto";
+  btn.style.opacity = "1";
 }
 </script>
 
