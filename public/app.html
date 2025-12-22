@@ -35,7 +35,7 @@ let unlocked = false;
 
 async function generateImage() {
   const prompt = document.getElementById("prompt").value;
-  if (!prompt) return alert("Write something");
+  document.getElementById("status").innerText = "⏳ Generating...";
 
   const res = await fetch("/generate", {
     method: "POST",
@@ -45,51 +45,44 @@ async function generateImage() {
 
   const data = await res.json();
 
-  // FREE LIMIT REACHED
   if (data.limit) {
     document.getElementById("status").innerText =
-      "❌ Free limit reached. Watch ad to unlock download";
-    document.getElementById("watchAdBtn").style.display = "inline-block";
+      "❌ Free limit reached. Watch ad to unlock.";
+    document.getElementById("watchAdBtn").style.display = "block";
     return;
   }
 
-  // IMAGE OK
+  // 👉 A nan ne matsalar take – mun gyara
   lastImageUrl = data.image;
-  document.getElementById("result").src = data.image;
-  document.getElementById("status").innerText = "✅ Image ready";
 
-  // Lock download
-  lockDownload();
+  const img = document.getElementById("result");
+  img.src = lastImageUrl;
+  img.style.display = "block";
+
+  const downloadBtn = document.getElementById("downloadBtn");
+  downloadBtn.href = lastImageUrl;     // 🔥 MUHIMMI
+  downloadBtn.style.pointerEvents = "none";
+  downloadBtn.style.opacity = "0.5";
+
+  document.getElementById("status").innerText =
+    "✅ Image ready. Watch ad to unlock download.";
 }
 
-// LOCK DOWNLOAD
-function lockDownload() {
-  unlocked = false;
-  const btn = document.getElementById("downloadBtn");
-  btn.style.pointerEvents = "none";
-  btn.style.opacity = "0.5";
-}
-
-// WATCH AD (FAKE AD 5 SECONDS)
+// ===== WATCH AD (FAKE) =====
 document.getElementById("watchAdBtn").onclick = () => {
-  alert("📢 Watching ad… please wait 5 seconds");
+  document.getElementById("status").innerText = "📢 Watching ad...";
 
   setTimeout(() => {
-    unlockDownload();
-    document.getElementById("status").innerText =
-      "✅ Ad watched. Download unlocked!";
-    document.getElementById("watchAdBtn").style.display = "none";
-  }, 5000);
-};
+    unlocked = true;
 
-// UNLOCK DOWNLOAD
-function unlockDownload() {
-  unlocked = true;
-  const btn = document.getElementById("downloadBtn");
-  btn.href = lastImageUrl;
-  btn.style.pointerEvents = "auto";
-  btn.style.opacity = "1";
-}
+    const downloadBtn = document.getElementById("downloadBtn");
+    downloadBtn.style.pointerEvents = "auto";
+    downloadBtn.style.opacity = "1";
+
+    document.getElementById("status").innerText =
+      "✅ Download unlocked!";
+  }, 5000); // 5 seconds ad
+};
 </script>
 
 </body>
