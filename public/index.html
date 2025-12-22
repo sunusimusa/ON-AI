@@ -3,71 +3,89 @@
 <head>
   <meta charset="UTF-8" />
   <title>Tele Image AI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#111827">
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #0f172a;
       color: #fff;
+      margin: 0;
       padding: 20px;
-      max-width: 500px;
-      margin: auto;
       text-align: center;
     }
 
-    h2 { margin-bottom: 10px; }
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    p {
+      color: #cbd5e1;
+    }
 
     input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
+      width: 90%;
+      max-width: 400px;
+      padding: 12px;
+      border-radius: 8px;
       border: none;
-      margin-bottom: 10px;
-      font-size: 15px;
+      margin-top: 10px;
+      font-size: 16px;
     }
 
     button {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 6px;
+      margin-top: 12px;
+      padding: 12px 20px;
       font-size: 15px;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
-      margin-top: 8px;
+      background: #22c55e;
+      color: #000;
+      font-weight: bold;
     }
 
-    .primary { background: #22c55e; color: #000; }
-    .pay { background: #facc15; color: #000; }
-    .disabled { opacity: 0.5; pointer-events: none; }
+    button.secondary {
+      background: #38bdf8;
+    }
+
+    button.pay {
+      background: #facc15;
+    }
 
     #status {
-      margin-top: 10px;
+      margin-top: 12px;
       font-weight: bold;
     }
 
     img {
       max-width: 100%;
+      border-radius: 12px;
       margin-top: 15px;
-      border-radius: 8px;
       display: none;
     }
 
-    .ad-box {
-      margin-top: 15px;
-      padding: 10px;
-      background: #020617;
-      border-radius: 6px;
-      font-size: 14px;
-      color: #94a3b8;
+    #downloadBtn {
+      display: none;
+      margin-top: 10px;
+      background: #22c55e;
     }
 
-    .footer {
-      margin-top: 20px;
+    /* Fake Ad */
+    #adBox {
+      display: none;
+      margin-top: 15px;
+      padding: 15px;
+      background: #1e293b;
+      border-radius: 10px;
+    }
+
+    footer {
+      margin-top: 30px;
       font-size: 13px;
       color: #94a3b8;
     }
@@ -76,54 +94,54 @@
 
 <body>
 
-<h2>🎨 Tele Image AI</h2>
+<h1>🎨 Tele Image AI</h1>
 <p>Generate AI images instantly</p>
 
-<input id="prompt" placeholder="Describe image (e.g. a lion wearing crown)" />
+<input id="prompt" placeholder="Describe image (e.g. lion wearing crown)" />
 
-<button class="primary" onclick="generateImage()">Generate Image</button>
+<br>
+<button onclick="generateImage()">Generate Image</button>
 
-<p id="status"></p>
+<div id="status"></div>
 
-<img id="result" />
+<img id="resultImage" />
 
-<!-- ADS PLACEHOLDER -->
-<div class="ad-box">
-  📢 Advertisement (Banner Ad)
+<!-- AD -->
+<div id="adBox">
+  <p>📢 Sponsored Ad</p>
+  <button class="secondary" onclick="watchAd()">Watch Ad (+Unlock)</button>
 </div>
 
-<button id="payBtn" class="pay" style="display:none" onclick="pay()">
+<!-- PAY -->
+<button id="payBtn" class="pay" onclick="payToDownload()" style="display:none;">
   💳 Pay ₦200 to Download
 </button>
 
-<button id="downloadBtn" class="disabled" onclick="downloadImage()">
-  ⬇️ Download Image
-</button>
+<!-- DOWNLOAD -->
+<button id="downloadBtn" onclick="downloadImage()">⬇️ Download Image</button>
 
-<div class="footer">
-  © 2025 Tele Image AI • PWA Ready
-</div>
-
-<!-- PAYSTACK -->
-<script src="https://js.paystack.co/v1/inline.js"></script>
+<footer>
+  Install this app from browser menu 📲
+</footer>
 
 <script>
 let lastImageUrl = "";
-let paid = false;
+let unlocked = false;
 
-/* ================= GENERATE ================= */
+/* ================= IMAGE GENERATE ================= */
 async function generateImage() {
-  const prompt = document.getElementById("prompt").value.trim();
+  const prompt = document.getElementById("prompt").value;
   if (!prompt) {
-    alert("Please enter image description");
+    alert("Enter image description");
     return;
   }
 
-  document.getElementById("status").innerText = "⏳ Generating image...";
-  document.getElementById("result").style.display = "none";
-  document.getElementById("downloadBtn").classList.add("disabled");
+  document.getElementById("status").innerText = "⏳ Generating...";
+  document.getElementById("resultImage").style.display = "none";
+  document.getElementById("downloadBtn").style.display = "none";
   document.getElementById("payBtn").style.display = "none";
-  paid = false;
+  document.getElementById("adBox").style.display = "none";
+  unlocked = false;
 
   const res = await fetch("/generate", {
     method: "POST",
@@ -133,49 +151,48 @@ async function generateImage() {
 
   const data = await res.json();
 
-  if (data.error) {
-    document.getElementById("status").innerText = "❌ " + data.error;
+  if (data.limit) {
+    document.getElementById("status").innerText =
+      "❌ Free limit reached";
+    document.getElementById("adBox").style.display = "block";
+    document.getElementById("payBtn").style.display = "block";
     return;
   }
 
   lastImageUrl = data.image;
-  const img = document.getElementById("result");
+
+  const img = document.getElementById("resultImage");
   img.src = data.image;
   img.style.display = "block";
 
-  document.getElementById("status").innerText =
-    "✅ Image ready. Pay to download.";
-
+  document.getElementById("status").innerText = "✅ Image ready";
+  document.getElementById("adBox").style.display = "block";
   document.getElementById("payBtn").style.display = "block";
 }
 
-/* ================= PAYSTACK ================= */
-function pay() {
-  const handler = PaystackPop.setup({
-    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba",
-    email: "customer@teleimage.ai",
-    amount: 200 * 100,
-    currency: "NGN",
-    callback: function () {
-      paid = true;
-      document.getElementById("status").innerText =
-        "🎉 Payment successful. Download unlocked!";
-      document.getElementById("downloadBtn").classList.remove("disabled");
-    },
-    onClose: function () {
-      alert("Payment cancelled");
-    }
-  });
+/* ================= WATCH AD ================= */
+function watchAd() {
+  document.getElementById("status").innerText = "📺 Watching ad...";
+  setTimeout(() => {
+    unlocked = true;
+    document.getElementById("status").innerText = "🔓 Download unlocked";
+    document.getElementById("downloadBtn").style.display = "inline-block";
+  }, 5000);
+}
 
-  handler.openIframe();
+/* ================= PAYSTACK PLACEHOLDER ================= */
+function payToDownload() {
+  alert("💳 Payment successful (test)");
+  unlocked = true;
+  document.getElementById("downloadBtn").style.display = "inline-block";
 }
 
 /* ================= DOWNLOAD ================= */
 async function downloadImage() {
-  if (!paid || !lastImageUrl) return;
+  if (!unlocked || !lastImageUrl) return;
 
-  const res = await fetch(lastImageUrl);
-  const blob = await res.blob();
+  const response = await fetch(lastImageUrl);
+  const blob = await response.blob();
 
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -183,11 +200,12 @@ async function downloadImage() {
   a.download = "tele-image-ai.png";
   document.body.appendChild(a);
   a.click();
+
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
 
-/* ================= PWA INSTALL ================= */
+/* ================= PWA ================= */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js");
 }
