@@ -10,7 +10,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f6f9;
+      background: #f5f6fa;
       padding: 20px;
       text-align: center;
     }
@@ -21,6 +21,7 @@
       background: #fff;
       padding: 20px;
       border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
     }
 
     input {
@@ -31,19 +32,10 @@
     }
 
     button {
-      width: 100%;
-      padding: 12px;
+      padding: 10px 15px;
       margin-top: 10px;
-      font-size: 15px;
+      font-size: 14px;
       cursor: pointer;
-      border: none;
-      border-radius: 6px;
-      background: #007bff;
-      color: white;
-    }
-
-    button:disabled {
-      background: #aaa;
     }
 
     img {
@@ -58,23 +50,16 @@
       font-weight: bold;
     }
 
-    /* BANNER AD */
-    .ad-box {
-      margin-top: 20px;
-      padding: 10px;
-      border: 1px dashed #ccc;
-      font-size: 14px;
-      background: #fafafa;
+    #downloadBtn {
+      display: none;
     }
 
-    a.download {
-      display: none;
-      margin-top: 12px;
-      padding: 12px;
-      background: green;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
+    .ad-box {
+      margin-top: 15px;
+      padding: 10px;
+      border: 1px dashed #aaa;
+      font-size: 13px;
+      color: #555;
     }
   </style>
 </head>
@@ -82,54 +67,53 @@
 <body>
 
 <div class="box">
-  <h2>🎨 Tele Image AI</h2>
+  <h2>🖼️ Tele Image AI</h2>
 
-  <input id="prompt" placeholder="Describe image (e.g. a lion wearing glasses)" />
+  <input id="prompt" placeholder="Describe image (e.g. lion wearing crown)" />
 
   <button onclick="generateImage()">Generate Image</button>
 
   <p id="status"></p>
 
-  <img id="resultImage" />
+  <img id="result" />
 
-  <!-- PAY BUTTON -->
-  <button id="payBtn" onclick="pay()" style="display:none;">
+  <!-- FAKE AD (ZA A MAYE GURBINSU DA REAL ADS) -->
+  <div id="adBox" class="ad-box" style="display:none;">
+    📢 Advertisement<br>
+    <button onclick="watchAd()">Watch Ad to Unlock Download</button>
+  </div>
+
+  <!-- PAY -->
+  <button id="payBtn" style="display:none;" onclick="pay()">
     💳 Pay ₦200 to Download
   </button>
 
   <!-- DOWNLOAD -->
-  <a id="downloadBtn" class="download" href="#">
+  <button id="downloadBtn" onclick="downloadImage()">
     ⬇️ Download Image
-  </a>
-
-  <!-- BANNER AD -->
-  <div class="ad-box">
-    📢 Sponsored Ad<br>
-    <b>Your ad can be here</b><br>
-    Promote your business today 🚀
-  </div>
+  </button>
 </div>
 
 <script>
 let lastImageUrl = "";
-let paid = false;
+let unlocked = false;
 
-/* ================= GENERATE IMAGE ================= */
+/* =========================
+   GENERATE IMAGE
+========================= */
 async function generateImage() {
   const prompt = document.getElementById("prompt").value;
-  const status = document.getElementById("status");
-  const img = document.getElementById("resultImage");
-
   if (!prompt) {
-    alert("Please enter prompt");
+    alert("Enter image description");
     return;
   }
 
-  status.innerText = "⏳ Generating image...";
-  img.style.display = "none";
+  document.getElementById("status").innerText = "⏳ Generating image...";
+  document.getElementById("result").style.display = "none";
+  document.getElementById("adBox").style.display = "none";
   document.getElementById("payBtn").style.display = "none";
   document.getElementById("downloadBtn").style.display = "none";
-  paid = false;
+  unlocked = false;
 
   const res = await fetch("/generate", {
     method: "POST",
@@ -140,27 +124,49 @@ async function generateImage() {
   const data = await res.json();
 
   if (!data.image) {
-    status.innerText = "❌ Generation failed";
+    document.getElementById("status").innerText = "❌ Image failed";
     return;
   }
 
   lastImageUrl = data.image;
+  const img = document.getElementById("result");
   img.src = data.image;
   img.style.display = "block";
-  status.innerText = "✅ Image ready. Pay to download.";
-  document.getElementById("payBtn").style.display = "block";
+
+  document.getElementById("status").innerText =
+    "🔒 Watch ad or pay to download";
+
+  document.getElementById("adBox").style.display = "block";
+  document.getElementById("payBtn").style.display = "inline-block";
 }
 
-/* ================= PAYSTACK ================= */
+/* =========================
+   FAKE AD (DEMO)
+========================= */
+function watchAd() {
+  document.getElementById("status").innerText = "📺 Watching ad...";
+  setTimeout(() => {
+    unlocked = true;
+    document.getElementById("status").innerText =
+      "✅ Ad watched. Download unlocked";
+    document.getElementById("downloadBtn").style.display = "inline-block";
+  }, 5000);
+}
+
+/* =========================
+   PAYSTACK
+========================= */
 function pay() {
-  let handler = PaystackPop.setup({
-    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba",   // 🔴 SA PUBLIC KEY DINKA
-    email: "customer@email.com",
+  const handler = PaystackPop.setup({
+    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba", // 🔴 MAYE GURBI DA NAKA
+    email: "customer@teleimage.ai",
     amount: 200 * 100,
     currency: "NGN",
     callback: function () {
-      paid = true;
-      unlockDownload();
+      unlocked = true;
+      document.getElementById("status").innerText =
+        "🎉 Payment successful. Download unlocked";
+      document.getElementById("downloadBtn").style.display = "inline-block";
     },
     onClose: function () {
       alert("Payment cancelled");
@@ -170,18 +176,11 @@ function pay() {
   handler.openIframe();
 }
 
-/* ================= UNLOCK DOWNLOAD ================= */
-function unlockDownload() {
-  document.getElementById("status").innerText =
-    "✅ Payment successful. Download unlocked";
-
-  const btn = document.getElementById("downloadBtn");
-  btn.style.display = "block";
-}
-
-/* ================= DOWNLOAD (ANDROID SAFE) ================= */
-document.getElementById("downloadBtn").onclick = async () => {
-  if (!paid || !lastImageUrl) return;
+/* =========================
+   DOWNLOAD (ANDROID + PC)
+========================= */
+async function downloadImage() {
+  if (!unlocked || !lastImageUrl) return;
 
   const response = await fetch(lastImageUrl);
   const blob = await response.blob();
@@ -195,7 +194,7 @@ document.getElementById("downloadBtn").onclick = async () => {
 
   document.body.removeChild(a);
   window.URL.revokeObjectURL(url);
-};
+}
 </script>
 
 </body>
