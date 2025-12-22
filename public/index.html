@@ -1,152 +1,191 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
   <title>Tele Image AI</title>
-
+<script src="https://pl28312948.effectivegatecpm.com/4e/8f/53/4e8f53fd8f471d4cfcc6003e48ffb3d3.js"></script>
   <!-- Paystack -->
+
   <script src="https://js.paystack.co/v1/inline.js"></script>
 
-  <!-- Adsterra (SAFE – Non-adult) -->
-  <script src="https://pl28312948.effectivegatecpm.com/4e/8f/53/4e8f53fd8f471d4cfcc6003e48ffb3d3.js"></script>
-  <!-- ⚠️ LURA: ka bar link ɗin Adsterra naka na gaskiya -->
+  <!-- Ads (Banner) -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f4f6f9;
       padding: 20px;
       text-align: center;
-      background: #f9f9f9;
     }
+
+    .box {
+      max-width: 420px;
+      margin: auto;
+      background: #fff;
+      padding: 15px;
+      border-radius: 10px;
+    }
+
     input {
+      width: 100%;
       padding: 10px;
-      width: 80%;
-      max-width: 320px;
+      margin-bottom: 10px;
     }
+
     button {
-      padding: 10px 15px;
-      margin-top: 10px;
+      padding: 10px 14px;
+      margin-top: 6px;
       cursor: pointer;
     }
+
     img {
-      max-width: 320px;
+      max-width: 100%;
       margin-top: 15px;
       display: none;
+      border-radius: 8px;
     }
+
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
     #downloadBtn {
       display: none;
+    }
+
+    .ad-box {
+      margin-top: 15px;
     }
   </style>
 </head>
 
 <body>
 
-  <h2>🍔 Tele Image AI</h2>
+<div class="box">
+  <h2>🎨 Tele Image AI</h2>
 
   <input id="prompt" placeholder="Describe image..." />
-  <br>
 
-  <button onclick="generateImage()">Generate</button>
+  <button onclick="generateImage()">Generate Image</button>
 
   <p id="status"></p>
 
   <img id="result" />
 
-  <br>
-
+  <!-- PAY BUTTON -->
   <button id="payBtn" style="display:none;" onclick="pay()">
     💳 Pay ₦200 to Download
   </button>
 
-  <br>
-
-  <button id="downloadBtn" onclick="downloadImage()">
+  <!-- DOWNLOAD -->
+  <button id="downloadBtn">
     ⬇️ Download Image
   </button>
 
-  <!-- ================= SCRIPT ================= -->
-  <script>
-    let lastImageUrl = "";
-    let paid = false;
+  <!-- ADS BANNER -->
+  <div class="ad-box">
+    <ins class="adsbygoogle"
+      style="display:block"
+      data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+      data-ad-slot="1234567890"
+      data-ad-format="auto"
+      data-full-width-responsive="true"></ins>
+  </div>
+</div>
 
-    async function generateImage() {
-      const prompt = document.getElementById("prompt").value;
-      if (!prompt) {
-        alert("Enter prompt");
-        return;
-      }
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
 
-      document.getElementById("status").innerText = "⏳ Generating...";
-      document.getElementById("result").style.display = "none";
+<script>
+let lastImageUrl = "";
+let paid = false;
+
+/* =========================
+   GENERATE IMAGE
+========================= */
+async function generateImage() {
+  const prompt = document.getElementById("prompt").value;
+  const status = document.getElementById("status");
+  const img = document.getElementById("result");
+
+  if (!prompt) {
+    alert("Enter prompt");
+    return;
+  }
+
+  status.innerText = "⏳ Generating image...";
+  img.style.display = "none";
+  paid = false;
+
+  const res = await fetch("/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt })
+  });
+
+  const data = await res.json();
+
+  if (!data.image) {
+    status.innerText = "❌ Image generation failed";
+    return;
+  }
+
+  lastImageUrl = data.image;
+  img.src = data.image;
+  img.style.display = "block";
+
+  status.innerText = "🔒 Pay to download image";
+  document.getElementById("payBtn").style.display = "inline-block";
+  document.getElementById("downloadBtn").style.display = "none";
+}
+
+/* =========================
+   PAYSTACK
+========================= */
+function pay() {
+  const handler = PaystackPop.setup({
+    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba",
+    email: "customer@email.com",
+    amount: 20000, // ₦200
+    currency: "NGN",
+    callback: function () {
+      paid = true;
+      document.getElementById("status").innerText = "✅ Payment successful!";
+      document.getElementById("downloadBtn").style.display = "inline-block";
       document.getElementById("payBtn").style.display = "none";
-      document.getElementById("downloadBtn").style.display = "none";
-      paid = false;
-
-      const res = await fetch("/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt })
-      });
-
-      const data = await res.json();
-
-      if (!data.image) {
-        document.getElementById("status").innerText =
-          "❌ Failed to generate image";
-        return;
-      }
-
-      lastImageUrl = data.image;
-
-      const img = document.getElementById("result");
-      img.src = data.image;
-      img.style.display = "block";
-
-      document.getElementById("status").innerText =
-        "🔒 Pay ₦200 to download image";
-
-      document.getElementById("payBtn").style.display = "inline-block";
+    },
+    onClose: function () {
+      alert("Payment cancelled");
     }
+  });
 
-    // ===== PAYSTACK =====
-    function pay() {
-      let handler = PaystackPop.setup({
-        key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba", // ⚠️ PUBLIC KEY DINKA
-        email: "customer@teleimage.ai",
-        amount: 200 * 100,
-        currency: "NGN",
-        callback: function () {
-          paid = true;
-          document.getElementById("status").innerText =
-            "✅ Payment successful. Download unlocked";
-          document.getElementById("downloadBtn").style.display =
-            "inline-block";
-        },
-        onClose: function () {
-          alert("Payment cancelled");
-        }
-      });
-      handler.openIframe();
-    }
+  handler.openIframe();
+}
 
-    // ===== DOWNLOAD (ANDROID + PC) =====
-    async function downloadImage() {
-      if (!paid || !lastImageUrl) return;
+/* =========================
+   DOWNLOAD (ANDROID FIX)
+========================= */
+document.getElementById("downloadBtn").onclick = async () => {
+  if (!paid || !lastImageUrl) return;
 
-      const response = await fetch(lastImageUrl);
-      const blob = await response.blob();
+  const response = await fetch(lastImageUrl);
+  const blob = await response.blob();
 
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "tele-image-ai.png";
-      document.body.appendChild(a);
-      a.click();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
 
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-    }
-  </script>
+  a.href = url;
+  a.download = "tele-image-ai.png";
+  document.body.appendChild(a);
+  a.click();
+
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+};
+</script>
 
 </body>
 </html>
