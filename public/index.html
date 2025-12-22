@@ -3,120 +3,127 @@
 <head>
   <meta charset="UTF-8" />
   <title>Tele Image AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- PAYSTACK -->
-  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#0f172a">
 
   <style>
-    <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#111111">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
     body {
       font-family: Arial, sans-serif;
-      background: #f5f6fa;
+      background: #0f172a;
+      color: #fff;
       padding: 20px;
+      max-width: 500px;
+      margin: auto;
       text-align: center;
     }
 
-    .box {
-      max-width: 420px;
-      margin: auto;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    }
+    h2 { margin-bottom: 10px; }
 
     input {
       width: 100%;
       padding: 10px;
-      margin-top: 10px;
-      font-size: 14px;
+      border-radius: 6px;
+      border: none;
+      margin-bottom: 10px;
+      font-size: 15px;
     }
 
     button {
-      padding: 10px 15px;
-      margin-top: 10px;
-      font-size: 14px;
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
       cursor: pointer;
+      margin-top: 8px;
     }
 
-    img {
-      max-width: 100%;
-      margin-top: 15px;
-      display: none;
-      border-radius: 8px;
-    }
+    .primary { background: #22c55e; color: #000; }
+    .pay { background: #facc15; color: #000; }
+    .disabled { opacity: 0.5; pointer-events: none; }
 
     #status {
       margin-top: 10px;
       font-weight: bold;
     }
 
-    #downloadBtn {
+    img {
+      max-width: 100%;
+      margin-top: 15px;
+      border-radius: 8px;
       display: none;
     }
 
     .ad-box {
       margin-top: 15px;
       padding: 10px;
-      border: 1px dashed #aaa;
+      background: #020617;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #94a3b8;
+    }
+
+    .footer {
+      margin-top: 20px;
       font-size: 13px;
-      color: #555;
+      color: #94a3b8;
     }
   </style>
 </head>
 
 <body>
 
-<div class="box">
-  <h2>🖼️ Tele Image AI</h2>
+<h2>🎨 Tele Image AI</h2>
+<p>Generate AI images instantly</p>
 
-  <input id="prompt" placeholder="Describe image (e.g. lion wearing crown)" />
+<input id="prompt" placeholder="Describe image (e.g. a lion wearing crown)" />
 
-  <button onclick="generateImage()">Generate Image</button>
+<button class="primary" onclick="generateImage()">Generate Image</button>
 
-  <p id="status"></p>
+<p id="status"></p>
 
-  <img id="result" />
+<img id="result" />
 
-  <!-- FAKE AD (ZA A MAYE GURBINSU DA REAL ADS) -->
-  <div id="adBox" class="ad-box" style="display:none;">
-    📢 Advertisement<br>
-    <button onclick="watchAd()">Watch Ad to Unlock Download</button>
-  </div>
-
-  <!-- PAY -->
-  <button id="payBtn" style="display:none;" onclick="pay()">
-    💳 Pay ₦200 to Download
-  </button>
-
-  <!-- DOWNLOAD -->
-  <button id="downloadBtn" onclick="downloadImage()">
-    ⬇️ Download Image
-  </button>
+<!-- ADS PLACEHOLDER -->
+<div class="ad-box">
+  📢 Advertisement (Banner Ad)
 </div>
+
+<button id="payBtn" class="pay" style="display:none" onclick="pay()">
+  💳 Pay ₦200 to Download
+</button>
+
+<button id="downloadBtn" class="disabled" onclick="downloadImage()">
+  ⬇️ Download Image
+</button>
+
+<div class="footer">
+  © 2025 Tele Image AI • PWA Ready
+</div>
+
+<!-- PAYSTACK -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
 
 <script>
 let lastImageUrl = "";
-let unlocked = false;
+let paid = false;
 
-/* =========================
-   GENERATE IMAGE
-========================= */
+/* ================= GENERATE ================= */
 async function generateImage() {
-  const prompt = document.getElementById("prompt").value;
+  const prompt = document.getElementById("prompt").value.trim();
   if (!prompt) {
-    alert("Enter image description");
+    alert("Please enter image description");
     return;
   }
 
   document.getElementById("status").innerText = "⏳ Generating image...";
   document.getElementById("result").style.display = "none";
-  document.getElementById("adBox").style.display = "none";
+  document.getElementById("downloadBtn").classList.add("disabled");
   document.getElementById("payBtn").style.display = "none";
-  document.getElementById("downloadBtn").style.display = "none";
-  unlocked = false;
+  paid = false;
 
   const res = await fetch("/generate", {
     method: "POST",
@@ -126,8 +133,8 @@ async function generateImage() {
 
   const data = await res.json();
 
-  if (!data.image) {
-    document.getElementById("status").innerText = "❌ Image failed";
+  if (data.error) {
+    document.getElementById("status").innerText = "❌ " + data.error;
     return;
   }
 
@@ -137,39 +144,23 @@ async function generateImage() {
   img.style.display = "block";
 
   document.getElementById("status").innerText =
-    "🔒 Watch ad or pay to download";
+    "✅ Image ready. Pay to download.";
 
-  document.getElementById("adBox").style.display = "block";
-  document.getElementById("payBtn").style.display = "inline-block";
+  document.getElementById("payBtn").style.display = "block";
 }
 
-/* =========================
-   FAKE AD (DEMO)
-========================= */
-function watchAd() {
-  document.getElementById("status").innerText = "📺 Watching ad...";
-  setTimeout(() => {
-    unlocked = true;
-    document.getElementById("status").innerText =
-      "✅ Ad watched. Download unlocked";
-    document.getElementById("downloadBtn").style.display = "inline-block";
-  }, 5000);
-}
-
-/* =========================
-   PAYSTACK
-========================= */
+/* ================= PAYSTACK ================= */
 function pay() {
   const handler = PaystackPop.setup({
-    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba", // 🔴 MAYE GURBI DA NAKA
+    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba",
     email: "customer@teleimage.ai",
     amount: 200 * 100,
     currency: "NGN",
     callback: function () {
-      unlocked = true;
+      paid = true;
       document.getElementById("status").innerText =
-        "🎉 Payment successful. Download unlocked";
-      document.getElementById("downloadBtn").style.display = "inline-block";
+        "🎉 Payment successful. Download unlocked!";
+      document.getElementById("downloadBtn").classList.remove("disabled");
     },
     onClose: function () {
       alert("Payment cancelled");
@@ -179,32 +170,26 @@ function pay() {
   handler.openIframe();
 }
 
-/* =========================
-   DOWNLOAD (ANDROID + PC)
-========================= */
+/* ================= DOWNLOAD ================= */
 async function downloadImage() {
-  if (!unlocked || !lastImageUrl) return;
+  if (!paid || !lastImageUrl) return;
 
-  const response = await fetch(lastImageUrl);
-  const blob = await response.blob();
-  const url = window.URL.createObjectURL(blob);
+  const res = await fetch(lastImageUrl);
+  const blob = await res.blob();
 
+  const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
   a.download = "tele-image-ai.png";
   document.body.appendChild(a);
   a.click();
-
   document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  URL.revokeObjectURL(url);
 }
-<script>
+
+/* ================= PWA INSTALL ================= */
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js")
-      .then(() => console.log("✅ PWA Service Worker registered"))
-      .catch(err => console.log("❌ SW error", err));
-  });
+  navigator.serviceWorker.register("/sw.js");
 }
 </script>
 
