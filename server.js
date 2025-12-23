@@ -34,6 +34,35 @@ app.post("/chat", async (req, res) => {
         ]
       })
     });
+    app.post("/verify-payment", async (req, res) => {
+  const { reference, days } = req.body;
+
+  try {
+    const response = await fetch(
+      `https://api.paystack.co/transaction/verify/${reference}`,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+        }
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.status && data.data.status === "success") {
+      // 👉 nan zaka iya adana PRO expiry (DB ko memory)
+      return res.json({
+        success: true,
+        proDays: days
+      });
+    } else {
+      return res.json({ success: false });
+    }
+
+  } catch (err) {
+    return res.status(500).json({ success: false });
+  }
+});
 
     const data = await response.json();
 
