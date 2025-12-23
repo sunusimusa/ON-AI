@@ -32,7 +32,26 @@ app.post("/generate", async (req, res) => {
     image: fakeImage
   });
 });
+app.post("/verify-payment", async (req, res) => {
+  const { reference } = req.body;
 
+  const verify = await fetch(
+    `https://api.paystack.co/transaction/verify/${reference}`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET}`
+      }
+    }
+  );
+
+  const data = await verify.json();
+
+  if (data.status && data.data.status === "success") {
+    return res.json({ success: true });
+  }
+
+  res.status(400).json({ success: false });
+});
 /* ================= VERIFY PAYMENT ================= */
 app.post("/verify-payment", async (req, res) => {
   const { reference } = req.body;
