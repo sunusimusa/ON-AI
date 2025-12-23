@@ -1,19 +1,21 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Tele Image AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- PAYSTACK -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f4f6f9;
       padding: 20px;
+      text-align: center;
       max-width: 600px;
       margin: auto;
-      text-align: center;
-      background: #f7f7f7;
     }
 
     h2 {
@@ -23,15 +25,15 @@
     input {
       width: 100%;
       padding: 10px;
-      margin-bottom: 10px;
       font-size: 15px;
+      margin-bottom: 10px;
     }
 
     button {
-      padding: 10px 16px;
+      padding: 10px 15px;
       font-size: 15px;
       cursor: pointer;
-      margin-top: 10px;
+      margin: 5px;
     }
 
     #status {
@@ -43,7 +45,7 @@
       max-width: 100%;
       margin-top: 15px;
       display: none;
-      border-radius: 6px;
+      border-radius: 8px;
     }
 
     #downloadBtn {
@@ -55,81 +57,97 @@
 
 <body>
 
-<h2>🎨 Tele Image AI</h2>
-<p>Generate image • Pay ₦200 • Download</p>
+  <h2>🎨 Tele Image AI</h2>
+  <p>Generate image → Pay → Download</p>
 
-<input id="prompt" placeholder="Describe image (e.g. a lion wearing sunglasses)" />
+  <input id="prompt" placeholder="Describe image (e.g. a lion wearing glasses)" />
 
-<button onclick="generateImage()">Generate Image</button>
+  <button onclick="generateImage()">Generate Image</button>
 
-<p id="status"></p>
+  <p id="status"></p>
 
-<img id="resultImage" />
+  <img id="result" />
 
-<button id="payBtn" onclick="pay()" style="display:none;">
-  💳 Pay ₦200 to Download
-</button>
+  <br>
 
-<a id="downloadBtn" download="tele-image-ai.png">
-  ⬇️ Download Image
-</a>
+  <button id="payBtn" onclick="payNow()" style="display:none;">
+    💳 Pay ₦200 to Download
+  </button>
+
+  <button id="downloadBtn">
+    ⬇️ Download Image
+  </button>
 
 <script>
-let imageUrl = "";
+/* ================== GLOBAL ================== */
+let lastImageUrl = "";
 let paid = false;
 
-/* ================= GENERATE IMAGE ================= */
+/* ================== GENERATE ================== */
 async function generateImage() {
-  const prompt = document.getElementById("prompt").value;
+  const prompt = document.getElementById("prompt").value.trim();
   const status = document.getElementById("status");
+  const img = document.getElementById("result");
 
   if (!prompt) {
-    alert("Please enter image description");
+    alert("Please describe the image");
     return;
   }
 
   status.innerText = "⏳ Generating image...";
+  img.style.display = "none";
   paid = false;
 
-  document.getElementById("resultImage").style.display = "none";
   document.getElementById("payBtn").style.display = "none";
   document.getElementById("downloadBtn").style.display = "none";
 
-  const res = await fetch("/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt })
-  });
+  try {
+    const res = await fetch("/generate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!data.image) {
-    status.innerText = "❌ Image generation failed";
-    return;
+    if (!data.image) {
+      status.innerText = "❌ Image generation failed";
+      return;
+    }
+
+    lastImageUrl = data.image;
+    img.src = data.image;
+    img.style.display = "block";
+
+    status.innerText = "🔒 Preview ready. Pay to download.";
+    document.getElementById("payBtn").style.display = "inline-block";
+
+  } catch (err) {
+    status.innerText = "❌ Server error";
   }
-
-  imageUrl = data.image;
-
-  const img = document.getElementById("resultImage");
-  img.src = imageUrl;
-  img.style.display = "block";
-
-  status.innerText = "🔒 Payment required to download";
-  document.getElementById("payBtn").style.display = "inline-block";
 }
 
-/* ================= PAYSTACK ================= */
-function pay() {
+/* ================== PAYSTACK ================== */
+function payNow() {
+  if (!lastImageUrl) return;
+
   const handler = PaystackPop.setup({
-    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba", // ⬅️ saka naka
+    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba",   // 🔴 SA NAKA A NAN
     email: "customer@teleimage.ai",
-    amount: 200 * 100,
+    amount: 200 * 100, // ₦200
     currency: "NGN",
-    callback: function () {
+    ref: "teleimg_" + Math.floor(Math.random() * 1000000000),
+
+    callback: function(response) {
       paid = true;
-      unlockDownload();
+      document.getElementById("status").innerText =
+        "✅ Payment successful. Download unlocked.";
+
+      document.getElementById("payBtn").style.display = "none";
+      document.getElementById("downloadBtn").style.display = "inline-block";
     },
-    onClose: function () {
+
+    onClose: function() {
       alert("Payment cancelled");
     }
   });
@@ -137,21 +155,24 @@ function pay() {
   handler.openIframe();
 }
 
-/* ================= DOWNLOAD ================= */
-async function unlockDownload() {
-  if (!paid || !imageUrl) return;
+/* ================== DOWNLOAD ================== */
+document.getElementById("downloadBtn").onclick = async () => {
+  if (!paid || !lastImageUrl) return;
 
-  const response = await fetch(imageUrl);
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
+  const res = await fetch(lastImageUrl);
+  const blob = await res.blob();
 
-  const a = document.getElementById("downloadBtn");
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
   a.href = url;
-  a.style.display = "inline-block";
+  a.download = "tele-image-ai.png";
+  document.body.appendChild(a);
+  a.click();
 
-  document.getElementById("status").innerText =
-    "✅ Payment successful. Download unlocked!";
-}
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+};
 </script>
 
 </body>
