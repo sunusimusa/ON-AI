@@ -1,29 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>Tele Image AI</title>
 
-  <!-- PAYSTACK -->
+  <!-- Paystack -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
+
+  <!-- Adsterra SAFE (Non-adult) -->
+  <!-- ⚠️ KA MAYE GURBIN src DA NAKA DAGA ADSTERRA -->
+  <script src="https://pl28312948.effectiveratecpm.com/INSERT_YOUR_AD_CODE.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
       text-align: center;
-      background: #f7f7f7;
+      background: #f9f9f9;
     }
 
     input {
       padding: 10px;
       width: 80%;
-      max-width: 400px;
+      max-width: 320px;
     }
 
     button {
-      margin-top: 10px;
       padding: 10px 15px;
+      margin-top: 10px;
       cursor: pointer;
     }
 
@@ -31,7 +35,6 @@
       max-width: 300px;
       margin-top: 15px;
       display: none;
-      border-radius: 8px;
     }
 
     #downloadBtn {
@@ -68,7 +71,7 @@
 
   <br>
 
-  <button id="downloadBtn">
+  <button id="downloadBtn" onclick="downloadImage()">
     ⬇️ Download Image
   </button>
 
@@ -77,10 +80,8 @@
     let lastImageUrl = "";
     let paid = false;
 
-    // 🔹 GENERATE IMAGE
     async function generateImage() {
       const prompt = document.getElementById("prompt").value;
-
       if (!prompt) {
         alert("Enter prompt");
         return;
@@ -102,7 +103,7 @@
 
       if (!data.image) {
         document.getElementById("status").innerText =
-          "❌ Image failed. Try again.";
+          "❌ Error generating image";
         return;
       }
 
@@ -113,46 +114,38 @@
       img.style.display = "block";
 
       document.getElementById("status").innerText =
-        "🔒 Pay ₦200 to download";
+        "🔒 Pay to download image";
       document.getElementById("payBtn").style.display = "inline-block";
     }
 
-    // 💳 PAYSTACK PAYMENT
     function pay() {
       const handler = PaystackPop.setup({
-        key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba", 
-        // ⬆️ SA PUBLIC KEY NAKA NAN
-
-        email: "customer@teleimage.ai",
-        amount: 200 * 100, // ₦200
+        key: "pk_test_REPLACE_WITH_YOUR_PUBLIC_KEY", // 👈 PUBLIC KEY
+        email: "customer@email.com",
+        amount: 200 * 100,
         currency: "NGN",
-
-        callback: function(response) {
+        callback: function () {
           paid = true;
           document.getElementById("status").innerText =
-            "✅ Payment successful!";
+            "✅ Payment successful. Download unlocked.";
           document.getElementById("payBtn").style.display = "none";
           document.getElementById("downloadBtn").style.display = "inline-block";
         },
-
-        onClose: function() {
+        onClose: function () {
           alert("Payment cancelled");
         }
       });
-
       handler.openIframe();
     }
 
-    // ⬇️ DOWNLOAD (ANDROID + PC)
-    document.getElementById("downloadBtn").onclick = async () => {
+    async function downloadImage() {
       if (!paid || !lastImageUrl) return;
 
       const response = await fetch(lastImageUrl);
       const blob = await response.blob();
-
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
 
+      const a = document.createElement("a");
       a.href = url;
       a.download = "tele-image-ai.png";
       document.body.appendChild(a);
@@ -160,7 +153,7 @@
 
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
-    };
+    }
   </script>
 
 </body>
