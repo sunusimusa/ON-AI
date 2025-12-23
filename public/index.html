@@ -11,29 +11,32 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f6f9;
-      padding: 20px;
+      background: #f5f6fa;
       text-align: center;
-      max-width: 600px;
-      margin: auto;
+      padding: 20px;
     }
 
-    h2 {
-      margin-bottom: 10px;
+    .box {
+      max-width: 420px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
 
     input {
       width: 100%;
       padding: 10px;
-      font-size: 15px;
       margin-bottom: 10px;
+      font-size: 15px;
     }
 
     button {
       padding: 10px 15px;
       font-size: 15px;
       cursor: pointer;
-      margin: 5px;
+      margin-top: 8px;
     }
 
     #status {
@@ -44,21 +47,22 @@
     img {
       max-width: 100%;
       margin-top: 15px;
-      display: none;
       border-radius: 8px;
+      display: none;
     }
 
     #downloadBtn {
       display: none;
-      margin-top: 15px;
+      margin-top: 10px;
     }
   </style>
 </head>
 
 <body>
 
+<div class="box">
   <h2>🎨 Tele Image AI</h2>
-  <p>Generate image → Pay → Download</p>
+  <p>Generate image FREE — Pay to download</p>
 
   <input id="prompt" placeholder="Describe image (e.g. a lion wearing glasses)" />
 
@@ -66,88 +70,73 @@
 
   <p id="status"></p>
 
-  <img id="result" />
-
-  <br>
+  <img id="resultImg" />
 
   <button id="payBtn" onclick="payNow()" style="display:none;">
     💳 Pay ₦200 to Download
   </button>
 
-  <button id="downloadBtn">
+  <button id="downloadBtn" onclick="downloadImage()">
     ⬇️ Download Image
   </button>
+</div>
 
 <script>
-/* ================== GLOBAL ================== */
 let lastImageUrl = "";
 let paid = false;
 
-/* ================== GENERATE ================== */
+/* ================= GENERATE IMAGE ================= */
 async function generateImage() {
   const prompt = document.getElementById("prompt").value.trim();
   const status = document.getElementById("status");
-  const img = document.getElementById("result");
+  const img = document.getElementById("resultImg");
 
   if (!prompt) {
-    alert("Please describe the image");
+    alert("Please enter image description");
     return;
   }
 
   status.innerText = "⏳ Generating image...";
   img.style.display = "none";
-  paid = false;
-
   document.getElementById("payBtn").style.display = "none";
   document.getElementById("downloadBtn").style.display = "none";
+  paid = false;
 
-  try {
-    const res = await fetch("/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
-    });
+  const res = await fetch("/generate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt })
+  });
 
-    const data = await res.json();
+  const data = await res.json();
 
-    if (!data.image) {
-      status.innerText = "❌ Image generation failed";
-      return;
-    }
-
-    lastImageUrl = data.image;
-    img.src = data.image;
-    img.style.display = "block";
-
-    status.innerText = "🔒 Preview ready. Pay to download.";
-    document.getElementById("payBtn").style.display = "inline-block";
-
-  } catch (err) {
-    status.innerText = "❌ Server error";
+  if (!data.image) {
+    status.innerText = "❌ Image generation failed";
+    return;
   }
+
+  lastImageUrl = data.image;
+  img.src = data.image;
+  img.style.display = "block";
+
+  status.innerText = "🔒 Pay ₦200 to download image";
+  document.getElementById("payBtn").style.display = "inline-block";
 }
 
-/* ================== PAYSTACK ================== */
+/* ================= PAYSTACK ================= */
 function payNow() {
-  if (!lastImageUrl) return;
-
   const handler = PaystackPop.setup({
-    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba",   // 🔴 SA NAKA A NAN
+    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba", // 🔴 PUT YOUR PAYSTACK PUBLIC KEY
     email: "customer@teleimage.ai",
-    amount: 200 * 100, // ₦200
+    amount: 20000, // ₦200
     currency: "NGN",
-    ref: "teleimg_" + Math.floor(Math.random() * 1000000000),
-
-    callback: function(response) {
+    callback: function () {
       paid = true;
-      document.getElementById("status").innerText =
-        "✅ Payment successful. Download unlocked.";
-
-      document.getElementById("payBtn").style.display = "none";
+      document.getElementById("status").innerText = "✅ Payment successful!";
       document.getElementById("downloadBtn").style.display = "inline-block";
+      document.getElementById("payBtn").style.display = "none";
     },
-
-    onClose: function() {
+    onClose: function () {
       alert("Payment cancelled");
     }
   });
@@ -155,12 +144,15 @@ function payNow() {
   handler.openIframe();
 }
 
-/* ================== DOWNLOAD ================== */
-document.getElementById("downloadBtn").onclick = async () => {
-  if (!paid || !lastImageUrl) return;
+/* ================= DOWNLOAD ================= */
+async function downloadImage() {
+  if (!paid || !lastImageUrl) {
+    alert("Please complete payment first");
+    return;
+  }
 
-  const res = await fetch(lastImageUrl);
-  const blob = await res.blob();
+  const response = await fetch(lastImageUrl);
+  const blob = await response.blob();
 
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -172,7 +164,7 @@ document.getElementById("downloadBtn").onclick = async () => {
 
   document.body.removeChild(a);
   window.URL.revokeObjectURL(url);
-};
+}
 </script>
 
 </body>
