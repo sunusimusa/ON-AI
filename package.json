@@ -2,15 +2,14 @@
   "name": "tele-ai-chat",
   "version": "1.0.0",
   "type": "module",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
   "engines": {
     "node": "18.x"
   },
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "express": "^4.19.2",
-    "openai": "^4.56.0"
+    "openai": "^4.0.0"
   }
 }
