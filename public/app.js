@@ -1,44 +1,57 @@
-// public/app.js
+const chat = document.getElementById("chat");
+const status = document.getElementById("status");
 
-const chatBox = document.getElementById("chatBox");
-const input = document.getElementById("message");
-const sendBtn = document.getElementById("sendBtn");
+async function send() {
+  const email = document.getElementById("email").value;
+  const msg = document.getElementById("msg").value;
 
-/* ADD MESSAGE TO UI */
-function addMessage(text, sender) {
-  const div = document.createElement("div");
-  div.className = sender === "user" ? "msg user" : "msg ai";
-  div.innerText = text;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
+  if (!email || !msg) return alert("Fill all fields");
+
+  chat.innerHTML += `<p><b>You:</b> ${msg}</p>`;
+  document.getElementById("msg").value = "";
+
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, message: msg })
+  });
+
+  const data = await res.json();
+
+  if (data.error) {
+    status.innerText = "❌ " + data.error;
+  } else {
+    chat.innerHTML += `<p><b>AI:</b> ${data.reply}</p>`;
+    status.innerText = "";
+  }
 }
 
-/* SEND MESSAGE */
-sendBtn.onclick = async () => {
-  const text = input.value.trim();
-  if (!text) return;
+function pay(plan) {
+  const email = document.getElementById("email").value;
+  if (!email) return alert("Enter email");
 
-  // (N) USER MESSAGE
-  addMessage(text, "user");
-  input.value = "";
-
-  try {
-    const res = await fetch("/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text })
-    });
-
-    const data = await res.json();
-
-    if (data.reply) {
-      // (A) AI MESSAGE
-      addMessage("AI: " + data.reply, "ai");
-    } else {
-      addMessage("❌ AI error", "ai");
+  const handler = PaystackPop.setup({
+    key: "YOUR_PAYSTACK_PUBLIC_KEY",
+    email,
+    amount:
+      plan === "1day" ? 50000 :
+      plan === "2weeks" ? 200000 :
+      300000,
+    currency: "NGN",
+    callback: function (res) {
+      fetch("/verify-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          reference: res.reference,
+          plan
+        })
+      }).then(() => {
+        alert("✅ PRO Activated");
+      });
     }
+  });
 
-  } catch (err) {
-    addMessage("❌ Server error", "ai");
-  }
-};
+  handler.openIframe();
+}
