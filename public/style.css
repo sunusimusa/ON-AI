@@ -1,26 +1,21 @@
 body {
   font-family: Arial, sans-serif;
   padding: 20px;
-  background: #f4f6f8;
   text-align: center;
+  background: #f4f6f8;
 }
 
 textarea {
   width: 90%;
   max-width: 400px;
-  height: 120px;
+  height: 100px;
   padding: 10px;
 }
 
 button {
-  width: 90%;
-  max-width: 400px;
-  padding: 12px;
   margin-top: 10px;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 6px;
+  padding: 12px 20px;
+  font-size: 16px;
 }
 
 #reply {
