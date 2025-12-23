@@ -1,52 +1,30 @@
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  padding: 15px;
-}
+/* public/style.css */
 
 #chatBox {
   max-width: 600px;
   margin: auto;
-  background: white;
+  height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
   padding: 10px;
-  border-radius: 8px;
-  min-height: 300px;
 }
 
-/* USER (N) */
-.user {
-  text-align: right;
+.msg {
   margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  max-width: 80%;
 }
 
-.user span {
-  display: inline-block;
+.msg.user {
   background: #2563eb;
   color: white;
-  padding: 8px 12px;
-  border-radius: 12px 12px 0 12px;
+  margin-left: auto; /* dama */
+  text-align: right;
 }
 
-/* AI (A) */
-.ai {
-  text-align: left;
-  margin: 8px 0;
-}
-
-.ai span {
-  display: inline-block;
+.msg.ai {
   background: #e5e7eb;
   color: black;
-  padding: 8px 12px;
-  border-radius: 12px 12px 12px 0;
-}
-
-textarea {
-  width: 100%;
-  margin-top: 10px;
-}
-
-button {
-  margin-top: 8px;
-  padding: 8px 12px;
+  margin-right: auto; /* hagu */
 }
