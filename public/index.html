@@ -1,80 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Tele Image AI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Paystack -->
+  <!-- PAYSTACK LIVE -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f4f6f8;
-      text-align: center;
       padding: 20px;
+      text-align: center;
     }
-
     input, button {
       width: 90%;
       max-width: 350px;
       padding: 14px;
       margin-top: 10px;
+      font-size: 16px;
       border-radius: 6px;
       border: 1px solid #ccc;
-      font-size: 16px;
     }
-
     button {
       border: none;
       cursor: pointer;
     }
-
-    #generateBtn { background: #2563eb; color: #fff; }
-    #payBtn { background: #16a34a; color: #fff; display: none; }
-    #downloadBtn { background: #111827; color: #fff; display: none; }
-
+    #generateBtn { background: #2563eb; color: white; }
+    #payBtn { background: #16a34a; color: white; display:none; }
+    #downloadBtn { background: #111827; color: white; display:none; }
     img {
       max-width: 100%;
       margin-top: 15px;
+      display:none;
       border-radius: 8px;
-      display: none;
     }
-
-    #status {
-      margin-top: 10px;
-      font-weight: bold;
-    }
+    #status { margin-top: 10px; font-weight: bold; }
   </style>
 </head>
 
 <body>
 
-  <h2>🎨 Tele Image AI</h2>
+<h2>🎨 Tele Image AI</h2>
 
-  <input id="prompt" placeholder="Describe image (e.g. lion wearing glasses)" />
+<input id="prompt" placeholder="Describe image (e.g. a lion wearing a crown)" />
+<button id="generateBtn">Generate Image</button>
 
-  <button id="generateBtn">Generate Image</button>
+<p id="status"></p>
+<img id="result" />
 
-  <p id="status"></p>
-
-  <img id="result" />
-
-  <button id="payBtn">💳 Pay ₦200 to Download</button>
-  <button id="downloadBtn">⬇️ Download Image</button>
+<button id="payBtn">💳 Pay ₦200 to Download</button>
+<button id="downloadBtn">⬇️ Download Image</button>
 
 <script>
 let lastImageUrl = "";
-let paymentReference = "";
+let unlocked = false;
 
 document.getElementById("generateBtn").onclick = async () => {
-  const prompt = document.getElementById("prompt").value;
-  if (!prompt) return alert("Enter prompt");
+  const prompt = document.getElementById("prompt").value.trim();
+  if (!prompt) return alert("Enter image description");
 
   document.getElementById("status").innerText = "⏳ Generating image...";
   document.getElementById("payBtn").style.display = "none";
   document.getElementById("downloadBtn").style.display = "none";
+  unlocked = false;
 
   const res = await fetch("/generate", {
     method: "POST",
@@ -84,68 +75,44 @@ document.getElementById("generateBtn").onclick = async () => {
 
   const data = await res.json();
 
+  if (!data.image) {
+    document.getElementById("status").innerText = "❌ Image generation failed";
+    return;
+  }
+
   lastImageUrl = data.image;
   document.getElementById("result").src = data.image;
   document.getElementById("result").style.display = "block";
-  document.getElementById("status").innerText =
-    "✅ Image ready. Pay to download.";
-
+  document.getElementById("status").innerText = "🔒 Pay to download image";
   document.getElementById("payBtn").style.display = "block";
 };
 
 // REAL PAYSTACK
 document.getElementById("payBtn").onclick = () => {
-  paymentReference = "tele_" + Date.now();
-
-  let handler = PaystackPop.setup({
-    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba",
-    email: "user@teleimage.ai",
+  const handler = PaystackPop.setup({
+    key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba", // 🔴 LIVE KEY
+    email: "customer@teleimage.ai",
     amount: 200 * 100,
     currency: "NGN",
-    ref: paymentReference,
     callback: function () {
-      verifyPayment(paymentReference);
-    },
-    onClose: function () {
-      alert("Payment cancelled");
+      unlocked = true;
+      document.getElementById("status").innerText = "✅ Payment successful";
+      document.getElementById("downloadBtn").style.display = "block";
     }
   });
-
   handler.openIframe();
 };
 
-async function verifyPayment(ref) {
-  document.getElementById("status").innerText = "🔎 Verifying payment...";
-
-  const res = await fetch("/verify-payment", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ reference: ref })
-  });
-
-  const data = await res.json();
-
-  if (data.success) {
-    document.getElementById("status").innerText =
-      "✅ Payment confirmed. Download unlocked.";
-    document.getElementById("downloadBtn").style.display = "block";
-  } else {
-    document.getElementById("status").innerText =
-      "❌ Payment not verified.";
-  }
-}
-
+// DOWNLOAD
 document.getElementById("downloadBtn").onclick = async () => {
-  const r = await fetch(lastImageUrl);
-  const blob = await r.blob();
+  if (!unlocked) return;
+  const blob = await fetch(lastImageUrl).then(r => r.blob());
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
   a.href = url;
   a.download = "tele-image-ai.png";
-  document.body.appendChild(a);
   a.click();
-  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };
 </script>
 
