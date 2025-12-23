@@ -1,30 +1,23 @@
-/* public/style.css */
-
-#chatBox {
+body {
+  font-family: Arial;
+  padding: 20px;
   max-width: 600px;
   margin: auto;
-  height: 300px;
-  overflow-y: auto;
-  border: 1px solid #ccc;
+}
+
+textarea, input {
+  width: 100%;
   padding: 10px;
+  margin-top: 8px;
 }
 
-.msg {
-  margin: 8px 0;
-  padding: 8px 12px;
-  border-radius: 8px;
-  max-width: 80%;
+button {
+  padding: 10px;
+  margin-top: 10px;
 }
 
-.msg.user {
-  background: #2563eb;
-  color: white;
-  margin-left: auto; /* dama */
-  text-align: right;
-}
-
-.msg.ai {
-  background: #e5e7eb;
-  color: black;
-  margin-right: auto; /* hagu */
+#chat p {
+  background: #f1f1f1;
+  padding: 8px;
+  border-radius: 5px;
 }
