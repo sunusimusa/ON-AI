@@ -5,16 +5,16 @@ const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-const client = new OpenAI({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-/* Health check (Render) */
+// health check
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-/* AI CHAT */
+// AI CHAT
 app.post("/chat", async (req, res) => {
   try {
     const { message } = req.body;
@@ -22,21 +22,21 @@ app.post("/chat", async (req, res) => {
       return res.status(400).json({ error: "No message" });
     }
 
-    const response = await client.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: "You are a helpful AI assistant." },
+        { role: "system", content: "You are a helpful assistant." },
         { role: "user", content: message }
       ]
     });
 
     res.json({
-      reply: response.choices[0].message.content
+      reply: completion.choices[0].message.content
     });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "AI request failed" });
+    res.status(500).json({ error: "AI error" });
   }
 });
 
