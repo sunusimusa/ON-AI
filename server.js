@@ -1,102 +1,59 @@
 import express from "express";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 app.use(express.json());
 app.use(express.static("public"));
 
-const FREE_HOURS = 8;
-const users = {}; // simple memory store
-
-// ✅ Health check
+/* HEALTH CHECK */
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// =======================
-// AI CHAT ENDPOINT
-// =======================
+/* AI CHAT */
 app.post("/chat", async (req, res) => {
-  const { userId, message } = req.body;
-  if (!message) return res.status(400).json({ error: "No message" });
-
-  const now = Date.now();
-
-  if (!users[userId]) {
-    users[userId] = {
-      freeUntil: now + FREE_HOURS * 60 * 60 * 1000,
-      proUntil: 0
-    };
-  }
-
-  const user = users[userId];
-
-  if (now > user.freeUntil && now > user.proUntil) {
-    return res.status(403).json({ error: "LIMIT_REACHED" });
-  }
-
   try {
-    const aiRes = await fetch("https://api.openai.com/v1/responses", {
+    const { message } = req.body;
+    if (!message) {
+      return res.status(400).json({ error: "No message" });
+    }
+
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4.1-mini",
-        input: message
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: "You are a helpful AI assistant." },
+          { role: "user", content: message }
+        ]
       })
     });
 
-    const data = await aiRes.json();
+    const data = await response.json();
 
-    const reply =
-      data.output?.[0]?.content?.[0]?.text || "No response";
+    if (!data.choices) {
+      console.error(data);
+      return res.status(500).json({ error: "AI response error" });
+    }
 
-    res.json({ reply });
+    res.json({
+      reply: data.choices[0].message.content
+    });
 
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "AI_ERROR" });
+    res.status(500).json({ error: "AI error" });
   }
 });
 
-// =======================
-// PAYSTACK VERIFY
-// =======================
-app.post("/verify-payment", async (req, res) => {
-  const { reference, userId, plan } = req.body;
-
-  try {
-    const r = await fetch(
-      `https://api.paystack.co/transaction/verify/${reference}`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
-        }
-      }
-    );
-
-    const data = await r.json();
-
-    if (data.data.status !== "success") {
-      return res.status(400).json({ error: "Payment failed" });
-    }
-
-    const days =
-      plan === "1w" ? 7 :
-      plan === "2w" ? 14 :
-      plan === "1m" ? 30 : 0;
-
-    users[userId].proUntil =
-      Date.now() + days * 24 * 60 * 60 * 1000;
-
-    res.json({ success: true });
-
-  } catch (e) {
-    res.status(500).json({ error: "Verify error" });
-  }
-});
-
-app.listen(3000, () => {
-  console.log("✅ Tele AI Chat running");
+/* IMPORTANT: PORT */
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
