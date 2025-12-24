@@ -1,156 +1,68 @@
 <!DOCTYPE html>
-<html lang="ha">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Tele AI Chat</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#2563eb" />
 
   <!-- PAYSTACK -->
   <script src="https://js.paystack.co/v1/inline.js"></script>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      padding: 15px;
-    }
-    h2 {
-      text-align: center;
-    }
-    #chatBox {
-      background: #fff;
-      border: 1px solid #ccc;
-      padding: 10px;
-      height: 250px;
-      overflow-y: auto;
-      margin-bottom: 10px;
-    }
-    .user { color: blue; }
-    .ai { color: green; }
-
-    textarea {
-      width: 100%;
-      height: 60px;
-      margin-bottom: 8px;
-    }
-    button {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 6px;
-      font-size: 16px;
-    }
-    .pro {
-      background: #16a34a;
-      color: #fff;
-      border: none;
-    }
-    .status {
-      text-align: center;
-      margin: 8px 0;
-      font-weight: bold;
-    }
-    .ads {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 12px;
-      color: #666;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<h2>🤖 Tele AI Chat</h2>
+  <h2>🤖 Tele AI Chat</h2>
 
-<!-- CHAT AREA -->
-<div id="chatBox"></div>
+  <!-- CHAT AREA -->
+  <div id="chatBox" style="min-height:200px;border:1px solid #ccc;padding:10px;margin-bottom:10px"></div>
 
-<textarea id="message" placeholder="Rubuta sakonka..."></textarea>
+  <!-- INPUT -->
+  <textarea id="message" placeholder="Rubuta sakonka..." style="width:100%;height:70px"></textarea>
 
-<button id="sendBtn">Send Message</button>
+  <button id="sendBtn" style="width:100%;margin-top:8px">
+    Send Message
+  </button>
 
-<div id="status" class="status"></div>
+  <p id="status"></p>
 
-<hr>
+  <hr>
 
-<!-- PRO BUTTONS -->
-<button class="pro" onclick="upgrade(7, 500)">Upgrade ₦500 (1 week)</button>
-<button class="pro" onclick="upgrade(14, 900)">Upgrade ₦900 (2 weeks)</button>
-<button class="pro" onclick="upgrade(30, 1500)">Upgrade ₦1500 (1 month)</button>
+  <!-- PRO BUTTONS -->
+  <button onclick="upgrade(7,500)" style="width:100%;margin-bottom:6px">
+    Upgrade ₦500 (1 week)
+  </button>
 
-<!-- ADS -->
-<div class="ads">
-  Advertisement <br>
-  <!-- SAKA ADS SCRIPT ANAN -->
-</div>
+  <button onclick="upgrade(14,900)" style="width:100%;margin-bottom:6px">
+    Upgrade ₦900 (2 weeks)
+  </button>
 
-<script>
-/* =========================
-   CHAT FUNCTION
-========================= */
-const chatBox = document.getElementById("chatBox");
-const sendBtn = document.getElementById("sendBtn");
-const messageInput = document.getElementById("message");
-const statusEl = document.getElementById("status");
+  <button onclick="upgrade(30,1500)" style="width:100%">
+    Upgrade ₦1500 (1 month)
+  </button>
 
-sendBtn.addEventListener("click", sendMessage);
+  <hr>
 
-async function sendMessage() {
-  const text = messageInput.value.trim();
-  if (!text) return;
+  <!-- ADS BANNER (SAFE ZONE) -->
+  <div id="ads" style="text-align:center;margin-top:20px">
+    <small>Advertisement</small><br>
+    <!-- 🔽 SAKA ADS SCRIPT ANAN 🔽 -->
+    <!-- <script src="ADS_SCRIPT_URL"></script> -->
+  </div>
 
-  addMsg("You", text);
-  messageInput.value = "";
-  statusEl.innerText = "⏳ AI na tunani...";
+  <!-- APP LOGIC -->
+  <script src="app.js"></script>
 
-  try {
-    const res = await fetch("/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text })
-    });
-
-    const data = await res.json();
-
-    if (data.reply) {
-      addMsg("AI", data.reply);
-      statusEl.innerText = "";
-    } else {
-      statusEl.innerText = "❌ Error daga AI";
+  <!-- SERVICE WORKER -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
     }
-  } catch (e) {
-    statusEl.innerText = "❌ Network error";
-  }
-}
-
-function addMsg(sender, text) {
-  const div = document.createElement("div");
-  div.innerHTML =
-    `<b class="${sender === 'You' ? 'user' : 'ai'}">${sender}:</b> ${text}`;
-  chatBox.appendChild(div);
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-/* =========================
-   PAYSTACK UPGRADE
-========================= */
-function upgrade(days, amount) {
-  const handler = PaystackPop.setup({
-    key: "pk_test_xxxxxxxxxxxxxx", // 🔴 SA PUBLIC KEY DINKA
-    email: "user@teleai.app",
-    amount: amount * 100,
-    currency: "NGN",
-    callback: function (response) {
-      statusEl.innerText = "✅ Payment successful!";
-      // 👉 zaka iya kiran /verify-payment daga baya
-      console.log("Reference:", response.reference);
-    },
-    onClose: function () {
-      statusEl.innerText = "❌ Payment an rufe";
-    }
-  });
-  handler.openIframe();
-}
-</script>
+  </script>
 
 </body>
 </html>
