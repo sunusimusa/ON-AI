@@ -1,17 +1,15 @@
 const chatBox = document.getElementById("chatBox");
 const sendBtn = document.getElementById("sendBtn");
-const msgInput = document.getElementById("message");
+const messageInput = document.getElementById("message");
 const statusEl = document.getElementById("status");
 
-/* ======================
-   SEND MESSAGE
-====================== */
+/* SEND MESSAGE */
 sendBtn.addEventListener("click", async () => {
-  const text = msgInput.value.trim();
+  const text = messageInput.value.trim();
   if (!text) return;
 
   addMsg("You", text);
-  msgInput.value = "";
+  messageInput.value = "";
   statusEl.innerText = "⏳ AI na tunani...";
 
   try {
@@ -29,6 +27,7 @@ sendBtn.addEventListener("click", async () => {
     } else {
       statusEl.innerText = "❌ Error daga AI";
     }
+
   } catch (err) {
     statusEl.innerText = "❌ Network error";
   }
@@ -41,34 +40,11 @@ function addMsg(sender, text) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-/* ======================
-   PAYSTACK UPGRADE
-====================== */
-document.querySelectorAll(".upgradeBtn").forEach(btn => {
+/* UPGRADE BUTTONS (TEST MODE) */
+document.querySelectorAll(".upgrade").forEach(btn => {
   btn.addEventListener("click", () => {
     const days = btn.dataset.days;
     const amount = btn.dataset.amount;
-
-    payWithPaystack(days, amount);
+    alert(`Upgrade clicked: ₦${amount} for ${days} days`);
   });
 });
-
-function payWithPaystack(days, amount) {
-  const handler = PaystackPop.setup({
-    key: "PK_TEST_OR_LIVE_KEY_ANAN", // 🔴 SAKA KEY DINKA
-    email: "user@teleai.app",
-    amount: amount * 100,
-    currency: "NGN",
-    callback: function (response) {
-      statusEl.innerText = "✅ Payment successful. PRO activated!";
-      console.log("Reference:", response.reference);
-
-      // zaka iya kiran /verify-payment anan
-    },
-    onClose: function () {
-      statusEl.innerText = "❌ Payment cancelled";
-    }
-  });
-
-  handler.openIframe();
-}
