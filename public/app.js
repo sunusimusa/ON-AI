@@ -1,47 +1,63 @@
 const chatBox = document.getElementById("chatBox");
-const msg = document.getElementById("message");
-const statusEl = document.getElementById("status");
 const sendBtn = document.getElementById("sendBtn");
+const messageInput = document.getElementById("message");
+const statusEl = document.getElementById("status");
 
-sendBtn.onclick = async () => {
-  const text = msg.value.trim();
+/* ================= CHAT ================= */
+sendBtn.addEventListener("click", async () => {
+  const text = messageInput.value.trim();
   if (!text) return;
 
-  chatBox.innerHTML += `<p><b>You:</b> ${text}</p>`;
-  msg.value = "";
+  addMsg("You", text);
+  messageInput.value = "";
   statusEl.innerText = "⏳ AI na tunani...";
 
-  const r = await fetch("/chat", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ message: text })
-  });
+  try {
+    const res = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text })
+    });
 
-  const d = await r.json();
+    const data = await res.json();
 
-  if (d.reply) {
-    chatBox.innerHTML += `<p><b>AI:</b> ${d.reply}</p>`;
-    statusEl.innerText = "";
-  } else {
-    statusEl.innerText = d.error || "Error daga AI";
-  }
-};
-
-function upgrade(days, amount) {
-  const handler = PaystackPop.setup({
-    key: pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba,
-    email: "user@teleai.app",
-    amount: amount * 100,
-    currency: "NGN",
-    callback: function(res) {
-      fetch("/verify-payment", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ reference: res.reference, days })
-      }).then(() => {
-        alert("PRO activated!");
-      });
+    if (data.reply) {
+      addMsg("AI", data.reply);
+      statusEl.innerText = "";
+    } else {
+      statusEl.innerText = "❌ Error daga AI";
     }
-  });
-  handler.openIframe();
+  } catch {
+    statusEl.innerText = "❌ Network error";
+  }
+});
+
+function addMsg(sender, text) {
+  const div = document.createElement("div");
+  div.innerHTML = `<b>${sender}:</b> ${text}`;
+  chatBox.appendChild(div);
+  chatBox.scrollTop = chatBox.scrollHeight;
 }
+
+/* ================= PAYSTACK ================= */
+document.querySelectorAll(".upgradeBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const days = btn.dataset.days;
+    const amount = btn.dataset.amount;
+
+    PaystackPop.setup({
+      key: "pk_live_193ec0bed7f25a41f8d9ab473ebfdd4d55db13ba", // 🔴 saka public key
+      email: "user@teleai.app",
+      amount: amount * 100,
+      currency: "NGN",
+      callback: function (response) {
+        statusEl.innerText = "✅ Payment successful!";
+        fetch("/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reference: response.reference, days })
+        });
+      }
+    }).openIframe();
+  });
+});
